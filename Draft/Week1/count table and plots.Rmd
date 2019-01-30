@@ -1,0 +1,180 @@
+---
+title: "Count tables and plots"
+date: 2019-1-25
+output: pdf_document
+---
+
+### Tables
+
+Here are the tables showing how many subjects in the drug group and how many subjects in the placebo group for each cluster. The results are from the ones with the smallest VI values where one, two, three or four variables were chosen. 
+
+```{R include = FALSE}
+require(refund)
+require(plyr)
+require(mgcv)
+library(vows)
+library(fda)
+library(knitr)
+
+setwd("/Users/yaolanqiu/Desktop/NYU/rotation/Rotation2/Week2")
+
+load('one_parameter.RData')
+load('two_parameter.RData')
+load('three_parameter.RData')
+load('four_parameter.RData')
+
+setwd('/Users/yaolanqiu/Desktop/NYU/rotation/Rotation2/week1/first code')
+
+# Read in demographic data and merge data
+demdat = read.csv("primary-n151.csv", header=T)
+# read in the final hamd outcome data
+newdat = read.csv("longFormat_score17.csv", header=T)
+newdata = newdat[,c(1,2,3,6,7,8,9)]
+newdata = unique(newdata)
+merged = merge(newdata,demdat,by = c('ProjectSpecificId',"site",
+                                     "Stage1TX","Sex","age_evaluation"), 
+               how = 'inner')
+merged$trt = (merged$Stage1TX=="SER/CIT")*1+1
+newdat$trt = (newdat$Stage1TX =="SER/CIT")*1+1
+
+```
+
+```{R include =FALSE}
+
+unfactorize = function(df){
+  for(i in which(sapply(df, class) == "factor")){
+    df[[i]] = as.character(df[[i]])
+  } 
+  return(df)
+}
+
+
+vi_selection = function(n, data){
+  # n: number of variables
+  # data: input data set
+  data_temp = unfactorize(data[data$vi == min(data$vi),])
+  cov_temp = as.character(data_temp[1,1:n])
+  temp = data.frame(ProjectSpecificId = merged$ProjectSpecificId,
+                    trt = merged$trt, merged[,cov_temp])
+  colnames(temp) = c('ProjectSpecificId','trt',cov_temp)
+  temp = na.omit(temp)
+  km_temp = kmeans(temp[,3:dim(temp)[2]], 4, nstart = 25)
+  return(list(km = km_temp, data = temp))
+}
+
+cluster_summary_table = function(km, data){
+  # km_temp
+  n_clus = length(unique(km$cluster))
+  drg = c(); pbo = c(); tot = c()
+  for(i in 1:n_clus){
+    drg = c(drg, sum(data[which(km$cluster == i),]$trt == 2))
+    pbo = c(pbo, sum(data[which(km$cluster == i),]$trt == 1))
+    tot = c(tot, dim(data[which(km$cluster == i),])[1])
+  }
+
+  drg_pbo = rbind(drg,pbo)
+  drg_pbo = rbind(drg_pbo, apply(drg_pbo,2,sum))
+  drg_pbo = cbind(drg_pbo, apply(drg_pbo,1,sum))
+  drg_pbo = data.frame(drg_pbo)
+  
+  rownames(drg_pbo) = c('Drug', 'Placebo', 'Total')
+  colnames(drg_pbo) = c(paste('cluster',1:n_clus),'Total')
+  return(drg_pbo)
+}
+
+cluster_score_plot = function(km, data){
+  #png('try.png')
+  #colors = c('red','blue','green','black')
+  par(mfrow = c(2,2))
+  for(clus_num in 1:4){
+    id = data[which(km$cluster == clus_num),1]
+    newdat_temp = newdat[(newdat$ProjectSpecificId) %in% id,
+                         c('ProjectSpecificId','week','score17','trt')]
+    #newdat_temp_drg = newdat_temp[newdat_temp$trt ==2, ]
+    #newdat_temp_pbo = newdat_temp[newdat_temp$trt ==1, ]
+    #rownames(newdat_temp_drg) = NULL; rownames(newdat_temp_pbo) = NULL
+    
+    #id_drg = unique(newdat_temp_drg$ProjectSpecificId)
+    #id_prb = unique(newdat_temp_pbo$ProjectSpecificId)
+    plot_temp = newdat_temp[newdat_temp$ProjectSpecificId == id[1],]
+    plot(plot_temp$week,
+         plot_temp$score17,
+         type = 'l', xlab = 'week',ylab = 'score',
+         ylim =c(0, max(newdat$score17,na.rm =TRUE)),
+         col = plot_temp$trt[1], # black: pbo; red: drg 
+         main = paste('cluster',clus_num,'score plot'))
+    
+    for(i in 2:length(id)){
+      plot_temp = newdat_temp[newdat_temp$ProjectSpecificId == id[i],]
+      lines(col = plot_temp$trt[1],
+            plot_temp$week,
+            plot_temp$score17)
+    }
+  }
+  par(mfrow = c(1,1))
+  #dev.off()
+}
+
+
+km_1 = vi_selection(1,one_parameter)
+km_2 = vi_selection(2,two_parameter)
+km_3 = vi_selection(3,three_parameter)
+km_4 = vi_selection(4,four_parameter)
+```
+
+
+
+
+```{R}
+kable(cluster_summary_table(km_1$km,km_1$data),
+      caption = 'One variable selection')
+```
+
+```{R}
+kable(cluster_summary_table(km_2$km,km_2$data),
+      caption = 'Two variables selection')
+```
+
+```{R}
+kable(cluster_summary_table(km_3$km,km_3$data),
+      caption = 'Three variables selection')
+```
+
+```{R}
+kable(cluster_summary_table(km_4$km,km_4$data),
+      caption = 'Four variables selection')
+```
+
+The total number of subjects is different between those four table. This is because, with different variables selection, there are different number of missing values. 
+
+The differences between the drug group and the placebo group in each cluster are not significant. 
+
+
+### Figures
+
+The variables combination with the smallest VI in each scenario was selected. The subjects in each cluster were identified and their corresponding results were used to draw the following plots. However, there are some missing values in the results. Therefore, the plots may contain some discontinuous lines. 
+
+
+#### One variable selection
+
+```{R}
+cluster_score_plot(km_1$km,km_1$data) # red for drug group, black for placebo
+```
+
+#### Two variables selection
+
+```{R}
+cluster_score_plot(km_2$km,km_2$data) # red for drug group, black for placebo
+```
+
+#### Three variables selection
+
+```{R}
+cluster_score_plot(km_3$km,km_3$data) # red for drug group, black for placebo
+``` 
+
+#### Four variables selection
+
+```{R}
+cluster_score_plot(km_4$km,km_4$data) # red for drug group, black for placebo
+```
