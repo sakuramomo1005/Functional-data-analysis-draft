@@ -1,0 +1,558 @@
+setwd('C:\\Users\\ly1192\\Downloads\\Functional-data-analysis-draft-master\\Functional-data-analysis-draft-master\\Draft\\Week4')
+
+
+### week 4
+### how to find combination of covariates. 
+### Newton Raphson KD
+### date: 2019-2-11
+
+# load data
+setwd('/Users/yaolanqiu/Desktop/NYU/rotation/Rotation2/Week3/from dr.tarpey')
+library(lme4)
+library(splines)
+library(fda)  # Use Ramsay's code to obtain design matrices for various
+library(mgcv)
+source("cvxcluster-0513.R")
+
+setwd('/Users/yaolanqiu/Desktop/NYU/rotation/Rotation2/Week3/from dr.tarpey')
+dat <- read.table("hcaf.dat", header=T)
+dim(dat) # 3364 7 
+length(unique(dat$subj)) # 543
+length(unique(dat$t1)) # 7
+
+t <- as.matrix(0:6) # pt = the order of time points
+ni <- length(t) # 7
+X = cbind(matrix(1, length(t), 1), t, t^2)
+Xtpo <- X
+tbar = mean(t) # 3
+Xtpo[, 2] = X[, 2] - tbar
+Xtpo[, 3] = (t - tbar)^2 - (ni^2 - 1) / 12
+c0 <- sqrt(sum(Xtpo[,1]^2))
+c1 <- sqrt(sum(Xtpo[,2]^2))
+c2 <- sqrt(sum(Xtpo[,3]^2))
+Xtpo[,1] = Xtpo[,1] / c0
+Xtpo[,2] = Xtpo[,2] / c1
+Xtpo[,3] = Xtpo[,3] / c2
+A <- matrix(0,3,3) # A = transformation matrix
+A[1, 1] <- 1 / c0
+A[1, 2] <- - tbar / c1
+A[2, 2] <- 1 / c1
+A[1, 3] <- (tbar^2 - (ni^2 - 1) / 12) / c2
+A[2, 3] <- -2*tbar / c2
+A[3, 3] <- 1 / c2
+p <- dim(X)[2]
+
+placebo <- NULL
+prozac <- NULL
+dat = subset(dat, trt != 2) # We are not using the imi treatment here
+
+dim(dat) # 2209 7 
+length(unique(dat$subj)) # 358
+length(unique(dat$t1)) # 7
+
+# > head(dat)
+# subj trt  y age BaselineCGI t1 responder
+# 1 2497   0 25  29           4  0         0
+# 2 2497   0 18  29           4  1         0
+# 3 2497   0 11  29           4  2         0
+# 4 2497   0  9  29           4  3         0
+# 5 2497   0 19  29           4  4         0
+# 6 2497   0 15  29           4  5         0
+
+x1 = 1; x2 = 1
+dat$covar = x1 * dat$age + x2 * dat$BaselineCGI
+
+tune_covars = function(x1,x2,dat){
+  dat$covar = x1 * dat$age + x2 * dat$BaselineCGI
+  t <- as.matrix(0:6) # pt = the order of time points
+  ni <- length(t) # 7
+  X = cbind(matrix(1, length(t), 1), t, t^2)
+  Xtpo <- X
+  tbar = mean(t) # 3
+  Xtpo[, 2] = X[, 2] - tbar
+  Xtpo[, 3] = (t - tbar)^2 - (ni^2 - 1) / 12
+  c0 <- sqrt(sum(Xtpo[,1]^2))
+  c1 <- sqrt(sum(Xtpo[,2]^2))
+  c2 <- sqrt(sum(Xtpo[,3]^2))
+  Xtpo[,1] = Xtpo[,1] / c0
+  Xtpo[,2] = Xtpo[,2] / c1
+  Xtpo[,3] = Xtpo[,3] / c2
+  A <- matrix(0,3,3) # A = transformation matrix
+  A[1, 1] <- 1 / c0
+  A[1, 2] <- - tbar / c1
+  A[2, 2] <- 1 / c1
+  A[1, 3] <- (tbar^2 - (ni^2 - 1) / 12) / c2
+  A[2, 3] <- -2*tbar / c2
+  A[3, 3] <- 1 / c2
+  p <- dim(X)[2]
+  
+  for (jt in unique(dat$trt)){ # fit lme for each arm
+    dati <- dat[dat$trt == jt,]
+    if(x1 ==0 & x2 ==0){
+      fit1 <- lmer(y ~ t1 + I(t1^2) + (t1+I(t1^2)|subj),
+                   data = dati, REML = FALSE)
+    }else{
+      fit1 <- lmer(y ~ t1 + I(t1^2) + (t1+I(t1^2)|subj) +  (t1+I(t1^2)|covar),
+                   data = dati, REML = FALSE)
+    }
+    
+    D <- as.matrix(VarCorr(fit1)$subj) # Covariance matrix for random effects
+    D <- D[1:p, 1:p]
+    beta <- as.matrix(fixef(fit1))
+    sigma <- attr(VarCorr(fit1), "sc")
+    bis <- as.matrix(coef(fit1)$subj) %*% t(solve(A))
+    responder <- NULL # record subjects that are responders or not
+    age <- NULL
+    BaselineCGI <- NULL
+    for (isubj in unique(dati$subj)){
+      datisubj <- dati[dati$subj ==isubj,]
+      responder <- rbind(responder, datisubj$responder[1])
+      age <- rbind(age, datisubj$age[1])
+      BaselineCGI <- rbind(BaselineCGI, datisubj$BaselineCGI[1])
+    }
+    if (jt == 0){
+      placebo$n <- length(unique(dati$subj))
+      placebo$dat <- dati
+      placebo$D <- D
+      placebo$beta <- beta
+      placebo$sigma <- sigma
+      placebo$bis <- bis
+      placebo$responder <- responder
+      placebo$age <- age
+      placebo$BaselineCGI <- BaselineCGI
+      placebo$fit <- fit1
+    }
+    if (jt == 1){
+      prozac$n <- length(unique(dati$subj))
+      prozac$dat <- dati
+      prozac$D <- D
+      prozac$beta <- beta
+      prozac$sigma <- sigma
+      prozac$bis <- bis
+      prozac$responder <- responder
+      prozac$age <- age
+      prozac$BaselineCGI <- BaselineCGI
+      prozac$fit <- fit1
+    }
+  }
+  
+  beta <- placebo$beta
+  D <- solve(A) %*% placebo$D %*% t(solve(A))
+  xbar <- solve(A) %*% beta
+  pbobeta = as.numeric(xbar[2:3,])
+  mu1 = pbobeta
+  pboD = D[2:3,2:3]
+  
+  beta <- prozac$beta
+  D <- solve(A) %*% prozac$D %*% t(solve(A))
+  xbar <- solve(A) %*% beta
+  prozbeta = as.numeric(xbar[2:3, ])
+  mu2 = prozbeta
+  prozD = D[2:3, 2:3]
+  
+  data = as.data.frame( rbind(placebo$bis[, 2:3], prozac$bis[, 2:3]) )
+  names(data) = c("slope", "concavity")
+  data$group = c(rep(1, placebo$n), rep(2, prozac$n))
+  
+  k = 4 
+  p1 = cvxcluster(miu1 = pbobeta, cov1 = pboD, miu2 = prozbeta, cov2 = prozD, 
+                  k = 4, nsim = 1000, niter = 20)
+  return(p1$purity[20])
+}
+
+tune_covars(0,0,dat)
+tune_covars(10,0,dat)
+tune_covars(0,10,dat)
+
+tune_covars(0,100000,dat)
+tune_covars(0,-100000,dat)
+
+f_prime = function(x){
+  a1 = tune_covars(0,x,dat)
+  a2 = tune_covars(0,x - 0.00001,dat)
+  res = (a1 - a2) / 0.00001
+  return(list(res = res,p = a1))
+}
+
+begin = Sys.time()
+x_old = 10
+set.seed(123)
+for(times in 1:100){
+  print('********')
+  print(times)
+  fx = tune_covars(0,x_old,dat)
+  print(fx)
+  fx_prime = (tune_covars(0,(x_old + 0.01),dat) - 
+                fx)/0.01
+  fx_prime_prime = 
+    
+    
+    if(fx_prime!=0){
+      x_new = x_old - fx/fx_prime
+    }else{
+      print('it is zero!')
+      break
+    } 
+  if(abs(x_old - x_new) < 10e-7){
+    print('converged!')
+    break
+  }
+  x_old = x_new
+}
+end = Sys.time()
+x_old
+
+
+
+## prime prime
+begin = Sys.time()
+x_old = 1
+value = c(); x_value = c()
+set.seed(123)
+for(times in 1:100){
+  print('********')
+  print(times)
+  fx = f_prime(x_old)
+  print(fx$p)
+  value = c(value,fx$p)
+  x_value = c(x_value, x_old)
+  fx_prime = (f_prime(x_old + 0.0001)$res - fx$res)/0.0001
+  if(fx_prime!=0){
+    x_new = x_old - fx$res/fx_prime
+  }else{
+    print('it is zero!')
+    break
+  } 
+  if(abs(x_old - x_new) < 10e-7){
+    print('converged!')
+    break
+  }
+  x_old = x_new
+}
+end = Sys.time()
+x_old
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+f = function(X){
+  x1 = X[1]; x2 = X[2]
+  dat$covar = x1 * dat$age + x2 * dat$BaselineCGI
+  
+  
+  t <- as.matrix(0:6) # pt = the order of time points
+  ni <- length(t) # 7
+  X = cbind(matrix(1, length(t), 1), t, t^2)
+  Xtpo <- X
+  tbar = mean(t) # 3
+  Xtpo[, 2] = X[, 2] - tbar
+  Xtpo[, 3] = (t - tbar)^2 - (ni^2 - 1) / 12
+  c0 <- sqrt(sum(Xtpo[,1]^2))
+  c1 <- sqrt(sum(Xtpo[,2]^2))
+  c2 <- sqrt(sum(Xtpo[,3]^2))
+  Xtpo[,1] = Xtpo[,1] / c0
+  Xtpo[,2] = Xtpo[,2] / c1
+  Xtpo[,3] = Xtpo[,3] / c2
+  A <- matrix(0,3,3) # A = transformation matrix
+  A[1, 1] <- 1 / c0
+  A[1, 2] <- - tbar / c1
+  A[2, 2] <- 1 / c1
+  A[1, 3] <- (tbar^2 - (ni^2 - 1) / 12) / c2
+  A[2, 3] <- -2*tbar / c2
+  A[3, 3] <- 1 / c2
+  p <- dim(X)[2]
+  
+  placebo <- NULL
+  prozac <- NULL
+  dat = subset(dat, trt != 2) # We are not using the imi treatment here
+  
+  
+  for (jt in unique(dat$trt)){ # fit lme for each arm
+    dati <- dat[dat$trt == jt,]
+    if(x1 ==0 & x2 ==0){
+      fit1 <- lmer(y ~ t1 + I(t1^2) + (t1+I(t1^2)|subj),
+                   data = dati, REML = FALSE)
+    }else{
+      fit1 <- lmer(y ~ t1 + I(t1^2) + (t1+I(t1^2)|subj) +  (t1+I(t1^2)|covar),
+                   data = dati, REML = FALSE)
+    }
+    
+    D <- as.matrix(VarCorr(fit1)$subj) # Covariance matrix for random effects
+    D <- D[1:p, 1:p]
+    beta <- as.matrix(fixef(fit1))
+    sigma <- attr(VarCorr(fit1), "sc")
+    bis <- as.matrix(coef(fit1)$subj) %*% t(solve(A))
+    responder <- NULL # record subjects that are responders or not
+    age <- NULL
+    BaselineCGI <- NULL
+    for (isubj in unique(dati$subj)){
+      datisubj <- dati[dati$subj ==isubj,]
+      responder <- rbind(responder, datisubj$responder[1])
+      age <- rbind(age, datisubj$age[1])
+      BaselineCGI <- rbind(BaselineCGI, datisubj$BaselineCGI[1])
+    }
+    if (jt == 0){
+      placebo$n <- length(unique(dati$subj))
+      placebo$dat <- dati
+      placebo$D <- D
+      placebo$beta <- beta
+      placebo$sigma <- sigma
+      placebo$bis <- bis
+      placebo$responder <- responder
+      placebo$age <- age
+      placebo$BaselineCGI <- BaselineCGI
+      placebo$fit <- fit1
+    }
+    if (jt == 1){
+      prozac$n <- length(unique(dati$subj))
+      prozac$dat <- dati
+      prozac$D <- D
+      prozac$beta <- beta
+      prozac$sigma <- sigma
+      prozac$bis <- bis
+      prozac$responder <- responder
+      prozac$age <- age
+      prozac$BaselineCGI <- BaselineCGI
+      prozac$fit <- fit1
+    }
+  }
+  
+  beta <- placebo$beta
+  D <- solve(A) %*% placebo$D %*% t(solve(A))
+  xbar <- solve(A) %*% beta
+  pbobeta = as.numeric(xbar[2:3,])
+  mu1 = pbobeta
+  pboD = D[2:3,2:3]
+  
+  beta <- prozac$beta
+  D <- solve(A) %*% prozac$D %*% t(solve(A))
+  xbar <- solve(A) %*% beta
+  prozbeta = as.numeric(xbar[2:3, ])
+  mu2 = prozbeta
+  prozD = D[2:3, 2:3]
+  
+  data = as.data.frame( rbind(placebo$bis[, 2:3], prozac$bis[, 2:3]) )
+  names(data) = c("slope", "concavity")
+  data$group = c(rep(1, placebo$n), rep(2, prozac$n))
+  
+  k = 4 
+  p1 = cvxcluster(miu1 = pbobeta, cov1 = pboD, miu2 = prozbeta, cov2 = prozD, 
+                  k = 4, nsim = 1000, niter = 20)
+  return(p1$purity[20])
+}
+
+# f = function(x){
+#   return(4 - x^2)
+# }
+
+f_1 = function(x){
+  return((f(x+0.01) - f(x))/0.01)
+}
+
+f_2 = function(x){
+  return((f_1(x + 0.01) - f_1(x))/0.01)
+}
+
+x_old = 10
+for( times in 1:100){
+  print(times)
+  print(f(x_old))
+  f1 = f_1(x_old)
+  f2 = f_2(x_old)
+  x_new = x_old - f1/f2
+  print(abs(x_new - x_old))
+  if(abs(x_new - x_old)<0.0001){
+    print('yes')
+    break}else{
+      x_old = x_new
+    }
+}
+
+
+
+### multivate newton
+
+f = function(X){ # X matrix, p * 1
+  y = 4 - X[1]^2 * X[2]^2 
+  return(y)
+}
+
+eps = 0.001
+
+f_1 = function(X){
+  p = length(X)
+  y = c()
+  for(i in 1:p){
+    X1 = X
+    X1[i] = X1[i] + eps
+    y = c(y, (f(X1) - f(X))/eps)
+  }
+  print(f(X1))
+  return(y)
+}
+
+f_1_part = function(X,i){
+  X1 = X
+  X1[i] = X[i] + eps
+  y = (f(X1) - f(X))/eps
+  print(f(X1))
+  return(y)
+}
+
+f_2 = function(X){
+  p = length(X)
+  y = matrix(0,p,p)
+  for(i in 1:p){
+    for(j in 1:p){
+      X1 = X
+      X1[j] = X[j] + eps
+      f1 = f_1_part(X1,i)  
+      f2 = f_1_part(X,i)
+      y[i,j] = (f1 - f2)/eps
+    }
+  }
+  return(y)
+}
+
+f_1(c(1,1))
+f_2(c(1,1))
+f_1_part(c(1,1),1)
+
+
+F2 = solve()
+
+
+
+
+## prime prime
+begin = Sys.time()
+x_old = c(1,1)
+value = c(); x_value = c();x_value2 = c()
+set.seed(123)
+for(times in 1:100){
+  print('********')
+  print(times)
+  Fx = f_1(x_old)
+  value = c(value,Fx)
+  x_value = c(x_value, x_old[1])
+  x_value2 = c(x_value2, x_old[2])
+  F2 = f_2(x_old)
+  x_new = x_old - solve(F2) %*% Fx
+  if(sum(abs(x_old - x_new)) < 10e-7){
+    print('converged!')
+    break
+  }
+  x_old = x_new
+}
+end = Sys.time()
+x_old
+
+
+v = c(); x1 = c(); x2 = c()
+times = 0
+for(i in seq(-5,5,1)){
+  for(j in  seq(-5,5,1)){
+    if(i^2 + j^2 !=0){
+      print(times)
+      X = c(i,j)
+      v = c(v,f(X))
+      x1 = c(x1,X[1]);x2 = c(x2,X[2])
+      times = times + 1
+    }
+  }
+}
+
+
+v1 = c(); x11 = c(); x12 = c()
+times = 0
+for(i in c(1)){
+  for(j in  seq(-1,1,0.01)){
+    if(i^2 + j^2 !=0){
+      print(i)
+      print(times)
+      X = c(i,j)
+      v1 = c(v1,f(X))
+      x11 = c(x11,X[1]);x12 = c(x12,X[2])
+      times = times + 1
+    }
+  }
+}
+
+
+v3 = c(); x31 = c(); x32 = c()
+times = 0
+for(i in seq(5,50,5)){
+  for(j in  seq(5,50,5)){
+    if(i^2 + j^2 !=0){
+      print(times)
+      X = c(i,j)
+      v3 = c(v3,f(X))
+      x31 = c(x31,X[1]);x32 = c(x32,X[2])
+      times = times + 1
+    }
+  }
+}
+
+
+v4 = c(); x41 = c(); x42 = c()
+times = 0
+for(i in c(1)){
+  for(j in  seq(10,11,0.001)){
+    if(i^2 + j^2 !=0){
+      print(i)
+      print(times)
+      X = c(i,j)
+      v4 = c(v4,f(X))
+      x41 = c(x41,X[1]);x42 = c(x42,X[2])
+      times = times + 1
+    }
+  }
+}
+
+
+v6 = c(); x61 = c(); x62 = c()
+times = 0
+for(i in seq(100,500,100)){
+  for(j in  seq(100,500,100)){
+    if(i^2 + j^2 !=0){
+      print(times)
+      X = c(i,j)
+      v6 = c(v6,f(X))
+      x61 = c(x61,X[1]);x62 = c(x62,X[2])
+      times = times + 1
+    }
+  }
+}
+
+all_x1 = c(x1,x11,x31,x41,x61)
+all_x2 = c(x2,x12,x32,x42,x61)
+all_y = c(v,v1,v3,v4,v6)
+
+
+all2 = all_x2[(all_x2 <=5) & (all_x1 == 1)]
+ally2 = all_y[(all_x2 <=5) & (all_x1 == 1)]
+data_temp = data.frame(x = all2, y = ally2)
+data_temp = data_temp[order(data_temp$x),]
+plot(data_temp$x, data_temp$y,type = 'l')
+
+
+
+data_temp = data.frame(x = x42, y = v4)
+data_temp = data_temp[order(data_temp$x),]
+plot(data_temp$x, data_temp$y,type = 'l')
+
+
+data_temp = data.frame(x = x62[1:5], y = v6[1:5])
+data_temp = data_temp[order(data_temp$x),]
+plot(data_temp$x, data_temp$y,type = 'l')
