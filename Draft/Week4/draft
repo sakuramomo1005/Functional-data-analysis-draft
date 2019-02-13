@@ -473,6 +473,10 @@ for(i in seq(-5,5,1)){
   }
 }
 
+result = list(v = v, x1 = x1, x2 = x2)
+
+save(result, file = 'v.RData')
+
 
 v1 = c(); x11 = c(); x12 = c()
 times = 0
@@ -490,6 +494,11 @@ for(i in c(1)){
 }
 
 
+
+result = list(v1 = v1, x11 = x11, x12 = x12)
+
+save(result, file = 'v1.RData')
+
 v3 = c(); x31 = c(); x32 = c()
 times = 0
 for(i in seq(5,50,5)){
@@ -503,6 +512,12 @@ for(i in seq(5,50,5)){
     }
   }
 }
+
+
+
+result = list(v3 = v3, x31 = x31, x32 = x32)
+
+save(result, file = 'v3.RData')
 
 
 v4 = c(); x41 = c(); x42 = c()
@@ -521,6 +536,10 @@ for(i in c(1)){
 }
 
 
+result = list(v4 = v4, x41 = x41, x42 = x42)
+
+save(result, file = 'v4.RData')
+
 v6 = c(); x61 = c(); x62 = c()
 times = 0
 for(i in seq(100,500,100)){
@@ -534,6 +553,13 @@ for(i in seq(100,500,100)){
     }
   }
 }
+
+
+
+result = list(v6 = v6, x61 = x61, x62 = x62)
+
+save(result, file = 'v6.RData')
+
 
 all_x1 = c(x1,x11,x31,x41,x61)
 all_x2 = c(x2,x12,x32,x42,x61)
