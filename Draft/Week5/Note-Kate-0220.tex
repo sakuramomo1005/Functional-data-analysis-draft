@@ -1,0 +1,128 @@
+\documentclass[12pt]{article}
+\usepackage{epsfig}
+\usepackage{natbib}
+\usepackage{multirow}
+\usepackage{amsmath}
+\bibliographystyle{mybst}
+\input boldmath.tex
+\usepackage{soul} % So I can use \st for strikethrough
+\usepackage{color}
+\usepackage{xcolor}
+\setlength{\parindent}{0pt}
+\newcommand{\thad}[1]{{\textcolor{blue}{#1}}}
+\newcommand{\kate}[1]{{\textcolor{violet}{#1}}}
+%\bigpage
+\newtheorem{theorem}{Theorem}
+\begin{document}
+\title{Outline 3}
+\date{February 20, 2019} \maketitle
+\subsection{Step1: }
+
+\kate{I was confused about the dimensions of the following equation. I just wanted to add the subscript i in the equation and specify the euqation for each subject.} 
+\\
+To calculate the max purity function, first,  
+fit the linear mixed model for the outcome $\by_i$and time $\bX_i$, with baseline covariates $\bx_i$:  
+$$\by_i = \bX_i(\bbeta +\bb_i +\bGamma(\balpha'\bx_i)) + \bepsilon_i.$$
+where,
+
+\begin{itemize}
+    \item $\by_i$ is the vector of outcome for the $i$th subject, i.e., the dimension of $\by_i$ is $(n_i, 1)$. $n_i$ is the number of observations for subject $i$.
+    \item $\bX_i$ is the covariance matrix for the $i$th subject. The dimension is $n_i, p$. P is the number of covariates. Here in our example $p = 3$, which is for $(1, t, t^2)$.
+    \item $\bbeta$ is the coefficient vector for the fixed effects of $\bX_i$. The dimension is $(p,1)$.
+    \item $\bx_i$ is the vector of the baseline covariates for the subject. The dimension is $(q,1)$.
+    \item $\bb_i$ is the vector of random effects. The dimension is $(p,1).$
+    \item $\bGamma$ is the vector of fixed effects of the baseline covariates. Dimension is $(p,1)$.
+    \item $w_i = \alpha'\bx_i$ is the combination of the input baseline covariates. $w_i$ is a scalar. 
+\end{itemize}
+
+We can define the covariance matrix of $\bX_i$ as $\bz_i$. The $\bz_i$ contains both fixed effects and random effects. 
+$$\bz_i = \bbeta + \bb_i + \bGamma w_i$$
+We can also write the above equation in the matrix version:
+$$Y_i = \left[\begin{array}
+{rrr}
+1 & t_1 & t_1^2 \\
+1 & t_2 & t_2^2 \\
+... & ... & ... \\
+1 & t_{n_i} & t_{n_i}^2
+\end{array}\right]
+\left[\begin{pmatrix}
+\beta_0 \\
+\beta_1 \\
+\beta_2
+\end{pmatrix} +  
+\begin{pmatrix}
+b_0 \\
+b_1 \\
+b_2
+\end{pmatrix} + 
+\begin{pmatrix}
+\gamma_0 \\
+\gamma_1 \\
+\gamma_2
+\end{pmatrix} w_i \right] + \bepsilon_i$$
+
+For different subjects, they have the same $\bbeta$ vector and the same $\bGamma$ vector. Their random effect vector $\bb_i$ can be different.
+
+\kate{Sorry I am still a little confused here. How could we combine the $\bY_i$, $\bX_i$ and the matrix of coefficients of each subject together to get an overall equation, like $\bY = \bX$ times some matrix?}
+
+\subsection{Step 2:}
+
+Estimate the distribution of $\bz_i$ for drug group and placebo, separately.
+$$\begin{aligned}
+f(\bz_i) &= \int_{w_i} f(\bz_i,w_i) dw_i \\
+ & = \int_{w_i} f(\bz_i|w_i) g(w_i) dw_i
+\end{aligned}$$
+where,
+\begin{itemize}
+\item
+ the conditional distribution 
+$f(\bz_i|w_i) \sim MVN( \bbeta + \bGamma w_i, \bD)$
+
+\item
+$g(w_i)$ is the distribution of the covariates combination $\balpha'\bx_i$. For example, if the covariates combination only contains "sex", which is binary, then the integral becomes summation.
+
+\item
+ $\bD_i$ is the covariance matrix of random effects $\bb_i$. 
+\end{itemize}
+%\\[1cm]
+~\\
+\noindent
+We could then estimate the $f(\cdot)$ for drug group and placebo group separately, i.e. $f_1(\bz_i)$ and $f_2(\bz_i)$. 
+
+\subsection{Step 3:}
+
+The purity should be a function of $w_i$. The integral of $z_i$ should be calculated first. Then we can define the purity as,
+$$\begin{aligned}
+P_{w_i} & = \int_{z_i} \frac{[f_1(z_i|w_i) - f_2(z_i|w_i)]^2}{[f_1(z_i|w_i) + f_2(z_i|w_i)]^2} (f_1(z_i|w_i) + f_2(z_i|w_i)) dz_i \\
+& = \int_{z_i} \frac{[f_1(z_i|w_i) - f_2(z_i|w_i)]^2}{f_1(z_i|w_i) + f_2(z_i|w_i)} dz_i
+\end{aligned}$$
+where
+\begin{itemize}
+    \item the integral of $\bzi$ with high dimension, which is equals to the dimension of $\bz_i$.
+    \item the $f_1(z_i|w_i)$ and $f_2(z_i|w_i)$ are pdf of multivariate normal distributions. 
+    \item $f_1(\bz_i|w_i) = (2\pi)^{-\frac{p}{2}} |\bD|^{-1/2}\exp(-\frac{1}{2} ( \bz_i - \hat{\bbeta}_1 - \hat{\bGamma}_1 w_i)^{T} D^{-1} (\bz_i - \hat{\bbeta}_1  - \hat{\bGamma}_1 w_i) )$
+    \item $f_2(\bz_i|w_i) = (2\pi)^{-\frac{p}{2}} |\bD|^{-1/2} \exp(-\frac{1}{2} ( \bz_i - \hat{\bbeta}_1 - \hat{\bGamma}_1 w_i)^{T} D^{-1} (\bz_i - \hat{\bbeta}_1  - \hat{\bGamma}_1 w_i) )$
+\end{itemize}
+
+It can be also approximated as the summation form: 
+$$\sum_{i=1}^n \bigl[ { f_1(\bz_i|w_i) -  f_2(\bz_i|w_i) \over  f_1(\bz_i|w_i) +  f_2(\bz_i|w_i)} \bigr]^2 $$
+
+The summation is also high dimensional, with the same dimension as $\bz_i$. 
+
+This is one purity value based on one combination of baseline covariates for subject $i$.
+
+Then we can get the subject purity, i.e., the purity for subject $\bw_i$. We need to calculate the integral or summation of $\bw_i$ next to get an overall purity for the data. 
+
+We would like to find the $\bw$ or $\balpha$ that max the $\bP_{\balpha'\bx}$, i.e.,
+ $$\begin{aligned}
+ \hat{\balpha} &= {\arg \max}_{\balpha} P_{\balpha} \\
+  & = {\arg \max}_{\balpha}
+ \int_{\balpha'\bx} P_{\balpha'\bx} d \balpha'\bx\\
+  & = 
+ {\arg \max}_{\balpha}
+ \int_{\balpha'\bx} {  {( f_1(\bz|\balpha'\bx) -  f_2(\bz|\balpha'\bx))^2 \over 1 f_1(\bz|\balpha'\bx) +  f_2(\bz|\balpha'\bx)}   d \balpha'\bx} 
+ \end{aligned}$$
+
+
+\bibliography{all}
+\end{document}
