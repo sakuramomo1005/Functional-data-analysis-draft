@@ -1,0 +1,524 @@
+---
+title: "Simulate data from mixed-effect model determined by hcaf depression data"
+date: 2019-2-22
+output: pdf_document
+---
+
+### Dataset generation
+
+In this document, we would like to simulate new dataset, based on the hcaf depression data. 
+
+The data were simulated through the following formula: 
+$$\mathbf{y_i} = \mathbf{X_i}(\mathbf{\beta} +\mathbf{b_i} +\mathbf{\Gamma}(\mathbf{\alpha}'\mathbf{x_i})) + \mathbf{\epsilon_i}.$$
+
+* Step 1: Fit LME model based on the *hcaf* data and get the estimated $\beta$ and covariance matrix value for drug and placebo group separately. Then calculate the eigenvalues and eigenvectors for the covariance matrix. 
+
+* Step 2: Generate $\Gamma$ value for drug and placebo group separately. Here, we seet $\Gamma_{drg}=(0,-0.5,-0.1)'$, $\Gamma_{drg}=(0,0.25,0.1)'$
+
+* Step 3: Generate baseline covariates from a normal distribution: $X_{drg} \sim N(0,1)$, $X_{pbo} \sim N(0,1)$. Since it is a RCT, the baseline covariates should from a same distribution.
+
+* Step 4: Generate the random effect in the above forumla. $b_i = eigen(D) sqrt(diag(eigen(D))) b_{random}$, where $b_{random}$ is a vector, each element comes from $N(0,1)$
+
+* Step 5: Calculate the outcome $y_i$ based on the above formula. The simulated dataset is generated. 
+
+Following the procedures, we can get:
+
+* 1. First try a big dataset with small covariance matrix (estimated value over 100), small variances (estimated value over 100), to make sure that we can get correct estimated parameters by fitting LME models.
+
+```{R include = FALSE}
+# read in data
+library(lme4)
+setwd('/Users/yaolanqiu/Desktop/NYU/rotation/Rotation2/Week3/from dr.tarpey')
+source("cvxcluster-0513.R")
+dat = read.table("hcaf.dat", header=T)
+dim(dat) # 3364 7
+load('puritys190222.RData')
+# generate X
+tt = as.matrix(0:6) # pt = the order of time points
+ni = length(tt) # 7
+X = cbind(matrix(1, length(tt), 1), tt, tt^2)
+
+# simulate data set 
+pbo = dat[dat$trt == 0, ] # placebo group
+drg = dat[dat$trt == 1, ] # drug group
+set.seed(123)
+# get the parameter: beta and D
+fit_pbo <- lmer(y ~ t1 + I(t1^2) + (t1+I(t1^2)|subj),           
+                data = pbo, REML = FALSE)
+fit_drg <- lmer(y ~ t1 + I(t1^2) + (t1+I(t1^2)|subj),           
+                data = drg, REML = FALSE)
+
+# random effect
+sigma.drg <- attr(VarCorr(fit_drg), "sc") /100
+sigma.pbo <- attr(VarCorr(fit_pbo), "sc") /100
+
+# beta
+beta_pbo = as.matrix(fixef(fit_pbo)[1:3])
+beta_drg = as.matrix(fixef(fit_drg)[1:3])
+
+# generate gamma randomly
+Gamma_drg=matrix(c(0,-.5,-.1),3,1)
+Gamma_pbo=matrix(c(0,.25,.1),3,1)
+
+# the random effct
+Dpbo = VarCorr(fit_pbo)$subj[1:3,1:3]
+Ddrg=VarCorr(fit_drg)$subj
+epbo=eigen(Dpbo)
+edrg=eigen(Ddrg)
+# generate 1000 subjects in each group
+ndrg=1000
+npbo=1000
+#Simulate data
+# generate baseline covariates
+mux = 1
+sigmax=1
+xdrg=rnorm(ndrg, mean=mux, sd=sigmax) # baseline covariates
+xpbo=rnorm(npbo, mean=mux, sd=sigmax)
+# combine dataset
+datsim=NULL
+for (i in 1:ndrg){
+  bi <- edrg$vectors%*%sqrt(abs(diag(edrg$values)))%*%as.matrix(rnorm(3))
+  bi = bi /100
+  yi <- X%*%(beta_drg+bi+Gamma_drg*xdrg[i]) + sigma.drg*rnorm(ni) 
+  dati <- NULL
+  dati$subj <- paste("drg",rep(i,ni), sep="")
+  dati$y <- yi
+  dati$tt<- tt
+  dati$x <- rep(xdrg[i],ni)
+  dati$trt <- rep("drg",ni)
+  dati <- data.frame(dati)
+  datsim <- rbind(datsim, dati)
+}
+for (i in 1:npbo){
+  bi <- epbo$vectors%*%sqrt(abs(diag(epbo$values)))%*%as.matrix(rnorm(3)) # abs? since there are some eigen values small than 0
+  bi = bi
+  yi <- X%*%(beta_pbo+bi+Gamma_pbo*xpbo[i]) + sigma.pbo*rnorm(ni)
+  dati <- NULL
+  dati$subj <- paste("pbo",rep(i,ni), sep="")
+  dati$y <- yi
+  dati$tt<- tt
+  dati$x <- rep(xpbo[i],ni)
+  dati$trt <- rep("pbo",ni)
+  dati <- data.frame(dati)
+  datsim <- rbind(datsim, dati)
+}
+
+head(datsim)
+
+# estimate the simulated dataset
+pbosim = datsim[datsim$trt == 'pbo', ]
+drgsim = datsim[datsim$trt == 'drg', ]
+fitdrg.sim = lmer(y ~ tt + I(tt^2) +x + x * tt +
+                     x * I(tt^2) + (tt+I(tt^2)|subj),
+                   data = drgsim, REML = FALSE)
+fitpbo.sim =  lmer(y ~ tt + I(tt^2) + x + x * tt +
+                     x * I(tt^2) + (tt+I(tt^2)|subj),
+                   data = pbosim, REML = FALSE)
+# the estimated values are similar with the known input values 
+```
+
+Here, the dataset's size is: 
+```{R}
+ndrg
+npbo
+```
+
+The variance is: 
+```{R}
+sigma.drg
+sigma.pbo
+```
+
+The estimated results: 
+```{R}
+fixef(fitdrg.sim)
+```
+
+which is close to our settings
+```{R}
+beta_drg
+```
+
+```{R}
+Gamma_drg
+```
+
+The same with placebo group fitting. 
+```{R}
+fixef(fitpbo.sim)
+```
+
+```{R}
+beta_pbo
+```
+
+```{R}
+Gamma_pbo
+```
+
+However, such settings with the small variances will bring large $D^{-1}$ values when fitting the multivariate normal distribution, which makes it is very easy to get a $f(.)$ value close to 0. 
+
+```{R}
+D_drg_est = as.matrix(VarCorr(fitdrg.sim)$subj)[2:3, 2:3]
+solve(D_drg_est)
+```
+
+Therefore, I think we can try the sigma values estimated from the LME model without over 100. The results are: 
+
+
+```{R include = FALSE}
+# read in data
+library(lme4)
+setwd('/Users/yaolanqiu/Desktop/NYU/rotation/Rotation2/Week3/from dr.tarpey')
+source("cvxcluster-0513.R")
+dat = read.table("hcaf.dat", header=T)
+dim(dat) # 3364 7
+
+# generate X
+tt = as.matrix(0:6) # pt = the order of time points
+ni = length(tt) # 7
+X = cbind(matrix(1, length(tt), 1), tt, tt^2)
+
+# simulate data set 
+pbo = dat[dat$trt == 0, ] # placebo group
+drg = dat[dat$trt == 1, ] # drug group
+set.seed(123)
+# get the parameter: beta and D
+fit_pbo <- lmer(y ~ t1 + I(t1^2) + (t1+I(t1^2)|subj),           
+                data = pbo, REML = FALSE)
+fit_drg <- lmer(y ~ t1 + I(t1^2) + (t1+I(t1^2)|subj),           
+                data = drg, REML = FALSE)
+
+# random effect
+sigma.drg <- attr(VarCorr(fit_drg), "sc") 
+sigma.pbo <- attr(VarCorr(fit_pbo), "sc") 
+
+# beta
+beta_pbo = as.matrix(fixef(fit_pbo)[1:3])
+beta_drg = as.matrix(fixef(fit_drg)[1:3])
+
+# generate gamma randomly
+Gamma_drg=matrix(c(0,-.5,-.1),3,1)
+Gamma_pbo=matrix(c(0,.25,.1),3,1)
+
+# the random effct
+Dpbo = VarCorr(fit_pbo)$subj[1:3,1:3]
+Ddrg=VarCorr(fit_drg)$subj
+epbo=eigen(Dpbo)
+edrg=eigen(Ddrg)
+
+# generate 1000 subjects in each group
+ndrg=100
+npbo=100
+
+#Simulate data
+
+# generate baseline covariates
+mux = 1
+sigmax=1
+xdrg=rnorm(ndrg, mean=mux, sd=sigmax) # baseline covariates
+xpbo=rnorm(npbo, mean=mux, sd=sigmax)
+
+
+# combine dataset
+datsim=NULL
+for (i in 1:ndrg){
+  bi <- edrg$vectors%*%sqrt(abs(diag(edrg$values)))%*%as.matrix(rnorm(3))
+  bi = bi 
+  yi <- X%*%(beta_drg+bi+Gamma_drg*xdrg[i]) + sigma.drg*rnorm(ni) 
+  dati <- NULL
+  dati$subj <- paste("drg",rep(i,ni), sep="")
+  dati$y <- yi
+  dati$tt<- tt
+  dati$x <- rep(xdrg[i],ni)
+  dati$trt <- rep("drg",ni)
+  dati <- data.frame(dati)
+  datsim <- rbind(datsim, dati)
+}
+for (i in 1:npbo){
+  bi <- epbo$vectors%*%sqrt(abs(diag(epbo$values)))%*%as.matrix(rnorm(3)) # abs? since there are some eigen values small than 0
+  bi = bi
+  yi <- X%*%(beta_pbo+bi+Gamma_pbo*xpbo[i]) + sigma.pbo*rnorm(ni)
+  dati <- NULL
+  dati$subj <- paste("pbo",rep(i,ni), sep="")
+  dati$y <- yi
+  dati$tt<- tt
+  dati$x <- rep(xpbo[i],ni)
+  dati$trt <- rep("pbo",ni)
+  dati <- data.frame(dati)
+  datsim <- rbind(datsim, dati)
+}
+
+head(datsim)
+
+# estimate the simulated dataset
+pbosim = datsim[datsim$trt == 'pbo', ]
+drgsim = datsim[datsim$trt == 'drg', ]
+fitdrg.sim = lmer(y ~ tt + I(tt^2) +x + x * tt +
+                     x * I(tt^2) + (tt+I(tt^2)|subj),
+                   data = drgsim, REML = FALSE)
+fitpbo.sim =  lmer(y ~ tt + I(tt^2) + x + x * tt +
+                     x * I(tt^2) + (tt+I(tt^2)|subj),
+                   data = pbosim, REML = FALSE)
+# the estimated values are similar with the known input values 
+```
+
+```{R}
+ndrg
+npbo
+```
+
+```{R}
+sigma.drg
+sigma.pbo
+```
+
+```{R}
+fixef(fitdrg.sim)
+```
+
+```{R}
+beta_drg
+```
+
+```{R}
+Gamma_drg
+```
+
+```{R}
+fixef(fitpbo.sim)
+```
+
+```{R}
+beta_pbo
+```
+
+```{R}
+Gamma_pbo
+```
+
+The values are also close. 
+
+
+### Purity calculation
+
+The purity for one subject can be calculated as:
+$$P_{w_i} = \int_{z_i} \frac{[f_1(z_i|w_i) - f_2(z_i|w_i)]^2}{[f_1(z_i|w_i) + f_2(z_i|w_i)]^2} (f_1(z_i|w_i) + f_2(z_i|w_i)) dz_i = \int_{z_i} \frac{[f_1(z_i|w_i) - f_2(z_i|w_i)]^2}{f_1(z_i|w_i) + f_2(z_i|w_i)} dz_i$$
+
+When the the two distributions are totally separated, the $P_{w_i} = 1$.
+
+However, I found the $P_{w_i}$ can excess 1. Maybe the two separated distributions is not the scenario that makes the formula get the max value?
+
+**The purity results:**
+
+The mean value of $P_{w_i}$ in the dataset is
+```{R} 
+mean(puritys)
+```
+
+The purity histogram
+```{R echo =FALSE, fig.height = 3, fig.width = 4, fig.align = "center"}
+hist(puritys)
+```
+
+
+### The outcome trajectories
+
+We can fit the LME model, and then get the $z= \beta + b_i + \Gamma(\alpha'x)$ value to fit the polynomial model for the outcome. 
+
+We can draw the trajectories of the estimated outcomes.
+
+```{R echo =FALSE, fig.height = 4, fig.width = 6, fig.align = "center"}
+datsim_unique = unique(data.frame(subj = datsim$subj, trt = datsim$trt, w = datsim$x))
+
+X_t = c(0:6)
+par(mfrow = c(1,1))
+plot(X_t, rep(0,7),col = 'white', ylim = c(-50,10),
+     xlab = 'Time',ylab = 'Score', main = 'Trajectory')
+for(i in 1:100){
+  w = datsim_unique$w[i]
+  mu_drg = coef(fitdrg.sim)$subj[i,2:3] + coef(fitdrg.sim)$subj[i,5:6] * w
+  mu_drg = unlist(mu_drg)
+  y_temp = X[,2:3] %*% c(mu_drg)
+  lines(X_t, y_temp, col = datsim_unique$trt[i], lty = 2)
+}
+for(i in 101:200){
+  ii = i - 100
+  w = datsim_unique$w[i]
+  mu_pbo = coef(fitpbo.sim)$subj[ii,2:3] + coef(fitpbo.sim)$subj[ii,5:6] * w 
+  mu_pbo = unlist(mu_pbo)
+  y_temp = X[,2:3] %*% mu_pbo
+  lines(X_t, y_temp, col = datsim_unique$trt[i])
+}
+
+legend(0, -30, legend=c("drug", "placebo"),
+       col=c('black', "red"), lty=2:1, cex=0.8)
+```
+
+The mean trajectories of the placebo and drug groups are: 
+
+```{R echo =FALSE, fig.height = 4, fig.width = 6, fig.align = "center"}
+X_t = c(0:6)
+mean_beta_drg = c()
+mean_beta_pbo = c()
+for(i in 1:100){
+  w = datsim_unique$w[i]
+  mean_beta_drg = rbind(mean_beta_drg, coef(fitdrg.sim)$subj[i,2:3] + coef(fitdrg.sim)$subj[i,5:6] * w )
+}
+
+for(i in 101:200){
+  w = datsim_unique$w[i]
+  ii = i - 100
+  mean_beta_pbo = rbind(mean_beta_pbo, coef(fitpbo.sim)$subj[ii,2:3] + coef(fitpbo.sim)$subj[ii,5:6] * w )
+}
+y1 = X[,2:3] %*% apply(mean_beta_drg,2,mean)
+y2 = X[,2:3] %*% apply(mean_beta_pbo,2,mean)
+plot(X_t, y1, type = 'l', col = 'black', lty = 2, ylim = c(-50,10),
+      xlab = 'Time',ylab = 'Score', main = 'Mean Trajectory')
+lines(X_t, y2, col = 'red')
+legend(0, -30, c("drug", "placebo"),
+       col=c('black', "red"), lty=2:1, cex=0.8)
+```
+
+
+### How about trajectories estimated without baseline covariates
+
+Does the baseline covariates help separate the two groups? We may fit LME model without covariates: 
+
+```{R}
+# what if we fit the model without covariates x 
+fitdrg.sim2 = lmer(y ~ tt + I(tt^2) + (tt+I(tt^2)|subj),
+                  data = drgsim, REML = FALSE)
+fitpbo.sim2 = lmer(y ~ tt + I(tt^2) + (tt+I(tt^2)|subj),
+                  data = pbosim, REML = FALSE)
+```
+
+The trajectories: 
+
+```{R echo =FALSE, fig.height = 4, fig.width = 6, fig.align = "center"}
+
+datsim_unique = unique(data.frame(subj = datsim$subj, trt = datsim$trt, w = datsim$x))
+# draw in one plot
+X_t = c(0:6)
+par(mfrow = c(1,1))
+plot(X_t, rep(0,7),col = 'white', ylim = c(-50,10),
+     xlab = 'Time',ylab = 'Score', main = 'Trajectory estimated without baseline covariates')
+for(i in 1:100){
+  if(datsim_unique$trt[i] == 'drg'){
+    mu_drg = coef(fitdrg.sim2)$subj[i,2:3] 
+    mu_drg = unlist(mu_drg)
+    y_temp = X[,2:3] %*% c(mu_drg)
+    lines(X_t, y_temp, col = 'blue' ,lty = 2)
+  }}
+for(i in 1:100){
+    mu_pbo = coef(fitpbo.sim2)$subj[i,2:3] 
+    mu_pbo = unlist(mu_pbo)
+    y_temp = X[,2:3] %*% mu_pbo
+    lines(X_t, y_temp, col = 'darkgreen')
+}
+
+legend(0, -30, legend=c("drug_no_baseline", "placebo_no_baseline"),
+       col=c('blue','darkgreen'), lty=2:1, cex=0.8)
+```
+
+The mean trajectories of the placebo and drug groups are:
+
+xlab = 'Time',ylab = 'Score', main = 'Mean Trajectory'
+
+```{R echo =FALSE, fig.height = 4, fig.width = 6, fig.align = "center"}
+
+mean_beta_drg_est = apply(coef(fitdrg.sim2)$subj[,2:3],2,mean)
+mean_beta_pbo_est = apply(coef(fitpbo.sim2)$subj[,2:3],2,mean)
+y_drg_est_without = X[,2:3] %*% mean_beta_drg_est
+y_pbo_est_without = X[,2:3] %*% mean_beta_pbo_est
+
+plot(X_t, y_drg_est_without, type = 'l', lty = 2, col = 'blue', ylim = c(-50,10),xlab = 'Time',ylab = 'Score', main = 'Mean Trajectory estimated without baseline covariates')
+lines(X_t, y_pbo_est_without, col = 'darkgreen')
+legend(0, -30, legend=c("drug", "placebo"),
+       col=c('blue', 'darkgreen'), lty=2:1, cex=0.8)
+```
+
+Draw them together: 
+
+```{R echo =FALSE, fig.height = 4, fig.width = 6, fig.align = "center"}
+y1 = X[,2:3] %*% apply(mean_beta_drg,2,mean)
+y2 = X[,2:3] %*% apply(mean_beta_pbo,2,mean)
+plot(X_t, y1, type = 'l', col = 2, ylim = c(-50,10),
+      xlab = 'Time',ylab = 'Score', main = 'Mean Trajectory')
+lines(X_t, y2, col = 'red')
+lines(X_t, y_drg_est_without, lty = 2, col = 'blue')
+lines(X_t, y_pbo_est_without, col = 'darkgreen')
+legend(0, -30, c("drug", "placebo","drug_without", "placebo_without"),
+       col=c('black', "red",'blue', 'darkgreen'), lty=c(2,1,2,1), cex=0.8)
+```
+
+
+The mean tr estimated by those two methods (with covariates and without covariates) are overlapped. We can check their estimated values:
+
+
+```{R}
+apply(mean_beta_drg,2,mean) # Estimated with covariates
+```
+
+```{R}
+apply(coef(fitdrg.sim2)$subj,2,mean) # Estimated without covariates
+```
+
+Their mean values are the same. But not every value is the same (but they are very close)
+
+```{R}
+head(mean_beta_drg)
+```
+
+```{R}
+head(coef(fitdrg.sim2)$subj)
+```
+
+
+Draw all trajectories together
+
+
+```{R echo =FALSE, fig.height = 4, fig.width = 6, fig.align = "center"}
+
+datsim_unique = unique(data.frame(subj = datsim$subj, trt = datsim$trt, w = datsim$x))
+# draw in one plot
+X_t = c(0:6)
+par(mfrow = c(1,1))
+plot(X_t, rep(0,7),col = 'white', ylim = c(-50,10),
+     xlab = 'Time',ylab = 'Score', main = 'Trajectory estimated without baseline covariates')
+for(i in 1:100){
+  w = datsim_unique$w[i]
+  mu_drg = coef(fitdrg.sim)$subj[i,2:3] + coef(fitdrg.sim)$subj[i,5:6] * w
+  mu_drg = unlist(mu_drg)
+  y_temp = X[,2:3] %*% c(mu_drg)
+  lines(X_t, y_temp, col = datsim_unique$trt[i], lty = 2)
+}
+for(i in 101:200){
+  ii = i - 100
+  w = datsim_unique$w[i]
+  mu_pbo = coef(fitpbo.sim)$subj[ii,2:3] + coef(fitpbo.sim)$subj[ii,5:6] * w 
+  mu_pbo = unlist(mu_pbo)
+  y_temp = X[,2:3] %*% mu_pbo
+  lines(X_t, y_temp, col = datsim_unique$trt[i])
+}
+
+for(i in 1:100){
+  if(datsim_unique$trt[i] == 'drg'){
+    mu_drg = coef(fitdrg.sim2)$subj[i,2:3] 
+    mu_drg = unlist(mu_drg)
+    y_temp = X[,2:3] %*% c(mu_drg)
+    lines(X_t, y_temp, col = 'blue' ,lty = 2)
+  }}
+for(i in 1:100){
+    mu_pbo = coef(fitpbo.sim2)$subj[i,2:3] 
+    mu_pbo = unlist(mu_pbo)
+    y_temp = X[,2:3] %*% mu_pbo
+    lines(X_t, y_temp, col = 'darkgreen')
+}
+
+legend(0, -30, legend=c("drug", "placebo",
+                        "drug_no_baseline", "placebo_no_baseline"),
+       col=c('black','red','blue','darkgreen'), lty=c(2,1,2,1), cex=0.8)
+```
+
+
