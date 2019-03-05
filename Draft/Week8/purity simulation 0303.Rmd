@@ -1,0 +1,199 @@
+---
+title: "Simulation to check the max purity"
+date: 2019-03-03
+output: pdf_document
+---
+
+We would like to firstly consider the scenario with two baseline covariates.
+
+We have two treatment arms: placebo (pbo) and drug (drg). The outcomes of those two gruops come from the formula:
+
+$$\mathbf{y} = \mathbf{X}(\mathbf{\beta} +\mathbf{b} +\mathbf{\Gamma(\alpha'x))} + \mathbf{\epsilon}.$$
+
+We can define the covariate matrix of $\mathbf{X}$ as $\mathbf{z}$. The $\mathbf{z}$ contains both fixed effects and random effects. 
+
+$$\mathbf{z} = \beta + \mathbf{b} + \mathbf{\Gamma} x$$
+
+
+### Parameters:
+
+#### Two groups
+
+Set parameters: 
+
+* $\beta_{drg} = \left[\begin{array}
+{r}
+0 \\
+25 \\
+1 
+\end{array}\right]$, $\beta_{pbo} = \left[\begin{array}
+{r}
+1 \\
+-5 \\
+-1 
+\end{array}\right]$
+
+* $\Gamma_{drg} = \left[\begin{array}
+{r}
+0 \\
+-2 \\
+-1 
+\end{array}\right]$,
+$\Gamma_{pbo} = \left[\begin{array}
+{c}
+0 \\
+2 \\
+1 
+\end{array}\right]$
+
+* $\mathbf{b} \sim \left[\begin{array}
+{ccc}
+1 & 0.1 & 0\\
+1 & 0.3 & 0\\
+2 &0.2 & 0.1
+\end{array}\right] * N(3,1)$
+
+* $\epsilon_{drg} \sim N(3,1); \epsilon_{pbo} \sim N(4,1);$
+
+#### Baselines
+
+The baselines come from the same distributions
+
+* Baseline covariate $x_1$, $x_2$, iid $\sim N(0,1)$
+
+* A true coefficent vector $\alpha$ = (0,1). 
+
+* A combination of baseline covariate $w$: $w = \alpha^T  [x_1,x_2]$
+
+
+### Purity calculation
+
+$$p_w(x) = \frac{(f_1(x|w) - f_2(x|w))^2}{f_1(x|w) + f_2(x|w)}$$
+
+where 
+* $f_1(x|w) \sim MVN(\beta_1 + \Gamma_1 * w, \mathbf{b_1})$
+
+* $f_2(x|w) \sim MVN(\beta_2 + \Gamma_2 * w, \mathbf{b_2})$
+
+
+1. Generate datasets based on the parameters and true $\alpha$
+
+2. Fit LME and estimate $\beta$, $\Gamma$ and $\mathbf{b}$ 
+
+3. Calculate the purity based on the above formula
+
+With the true $\alpha$, the purity should reach the max value.
+
+
+Then test whether it is correct or not.
+
+1. Choose another $\alpha$ candidate: $\alpha\prime$ and calculate another baseline covariates combination $w \prime$
+
+2. Fit the LME with $w \prime$ and estimate $\beta\prime$, $\Gamma\prime$ and $\mathbf{b}\prime$ 
+
+3. Calculate the purity based on the above formula
+
+With $\alpha\prime$, the purity should be smaller then the purity calculated by the true $\alpha$
+
+
+### Results
+
+The purity calculated by true $\alpha$:  0.5866095
+
+Other $\alpha$ candidates:
+
+* c(1.1,0): 0.5866102
+
+* c(1,0.5): 0.4853827
+
+* c(1,1): 0.3888147
+
+* c(0,1): 0.3270925
+
+* c(1,10): 0.3310953
+
+* c(-1,1): 0.333868
+
+### Find the max
+
+I used the Newton Raphson method to find the max value. However, it still did not work well. We may try some other algorithm.
+
+I just simply tried line search method, $\alpha = [\alpha_1, \alpha_2]$, vary $\alpha_1$ for (-10,10,by =1); vary  $\alpha_2$ for (-10,10,by =1).
+
+The purity looks like: 
+
+```{R include = FALSE}
+require(lattice)
+```
+
+```{R echo = FALSE,fig.height = 3, fig.width = 3, fig.align = "center"}
+setwd('/Users/yaolanqiu/Desktop/NYU/rotation/Rotation2/Week6/Week7')
+load('purityplot228.RData')
+purity = res
+wireframe(purity, drape=T)
+```
+
+
+
+## Purity calculatin 2
+
+* Make the  $\alpha$ = $[sin(\theta), cos(\theta)]$. The $\theta$ as the only input parameter. 
+
+* Set true purity as $\frac{3}{\pi}$
+
+```{R echo = FALSE, fig.height = 4, fig.width = 4, fig.align = "center"}
+setwd( "/Users/yaolanqiu/Desktop/NYU/rotation/Rotation2/Week6/Week7")
+load('theta_purity_called_data_100_0302.RData')
+plot(1:360, data$purity, type = 'l', ylab = 'Purity', xlab = 'theta')
+```
+
+The max purity is:
+
+```{R}
+data[data$purity == max(data$purity),]
+```
+
+The plot looks smooth. However, it isn't. Since in the previous plot, the distance between two points is 1 degree. Let's make the distance smaller. 
+
+Check the points between 50, by 0.0001. 
+
+The plots:
+
+```{R echo =FALSE,fig.height = 4, fig.width = 4, fig.align = "center"}
+load( 'theta_purity_50round_called_data_0302.RData')
+
+plot(data$theta,data$purity, type = 'b',cex = 0.1, ylab = 'purity',xlab = 'theta')
+```
+
+We can see that the plot has a trend, but actually very rough. It is hard to calculate the max value through Newton method.
+
+
+## Global optimization algorithms
+
+There are some algorithms to find the global extreme values instead Newton Raphson method or gradient descent. 
+
+Two algroithms: genetic algorithm (GA) and simulated annealing (SA) are commonly used. 
+The genetic algorithm seems to be the most accurate method of the two to find both the maximum and minimum of any function. Therefore, I tried to use GA to find the max value in our purity function. The results is showing below. 
+
+
+```{R include = FALSE}
+setwd('/Users/yaolanqiu/Desktop/NYU/rotation/Rotation2/Week8')
+load('purity_true_60_called_data_0304.RData')
+```
+
+
+```{R echo =FALSE,fig.height = 5, fig.width = 5, fig.align = "center"}
+# plot the purity 
+test_value = data$y
+result = list(x = 226.4062, y = 4.120925)
+plot(0:360, test_value, type = 'l', cex = 0.2, ylab = 'Purity', xlab = 'theta')
+points(result$x, result$y, col = 'red', pch = 18)
+points(result$x -180, result$y, col = 'red', pch = 18)
+points(60, 3.992271, col = 'blue', pch = 17)
+points(60 + 180, 3.992271, col = 'blue', pch = 17)
+legend(250,4.1, c('Estimated max','True value'), col = c('red','blue'), pch = c(18,17),cex= 0.7)
+```
+
+The red points is the max value find by the genetic algorithm. We can see this algorithm works well. However, the max value did not match the true value. 
+
+
