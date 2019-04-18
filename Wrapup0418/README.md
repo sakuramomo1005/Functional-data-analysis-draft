@@ -36,6 +36,10 @@ And asked questions
 
 # Week2:
 
+Aim: Try to analyze the real data. Choose 2 or more baseline covariates and do k-means and see whether we could get a good VI.
+
+
+
 # Week3:
 
 # Week4:
