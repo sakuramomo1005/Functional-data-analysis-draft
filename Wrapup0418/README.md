@@ -54,6 +54,10 @@ The results:
 
 By simply choose variables without transforamtinos, the results are not very satified. 
 
+The summary from Dr. Tarpey:
+
+[Rotation project](https://github.com/sakuramomo1005/Functional-data-analysis-draft/blob/master/Wrapup0418/results/KateRotationProject2.pdf)
+
 # Week3:
 
 # Week4:
