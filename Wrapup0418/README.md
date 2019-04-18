@@ -3,21 +3,24 @@ Content
 =================
 
 <!--ts-->
+   * [Project description](# Project description)
    * [Timelines](#Timelines)
       * [week1](#Week1)
       * [week2](#Week2)
       * [week3](#Week3)
-   * [week4](#Week4)
-   * [week5](#Week5)
-   * [week6](#Week6)
-   * [week7](#Week7)
-   * [week8](#Week8)
-   * [week9](#Week9)
-   * [week10](#Week10)
-   * [Usage](#usage)
-      * [STDIN](#stdin)
-    * [Dependency](#dependency)
+      * [week4](#Week4)
+      * [week5, 6, 7](#Week5, 6, 7)
+      * [week8](#Week8)
+      * [week9](#Week9)
+      * [week10, 11](#Week10, 11)
 <!--te-->
+
+
+# Project description
+
+## Methods
+
+## Results
 
 
 # Timelines
@@ -66,7 +69,7 @@ Asked questions and found new focuses:
 
 * [summary files](https://github.com/sakuramomo1005/Functional-data-analysis-draft/tree/master/Wrapup0418/results/Purity)
 
-# Week4:
+## Week4:
 
 
 Run Newton Raphson method to find the max purity value. 
@@ -78,18 +81,26 @@ dat$AX = dat$BaselineCGI + dat$age
 
 However, the results were not good at that time. There were some bugs. 
 
-# Week5:
+## Week5, 6, 7:
 
-# Week6:
+Fixed the questions on the purity 
+[](https://github.com/sakuramomo1005/Functional-data-analysis-draft/blob/master/Draft/Week6/purity%20confusion%20(2).ipynb)
 
-# Week7:
+got new ..
+
+simulation 
 
 # Week8:
+
+tried to use MC to simulate data and calculate purity 
 
 
 # Week9:
 
-# Week10:
+Fixed the puirty simulation method. based on the idea of location and shape
 
+# Week10, 11:
+
+back to check the l... 
 
 dfs
