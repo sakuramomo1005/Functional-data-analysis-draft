@@ -22,15 +22,14 @@ Timelines
 
 # Week1:
 
-* Read paper and learnt associated knowledge
+Read paper and learnt associated knowledge
 
-[Linear Transformations and the k-Means Clustering Algorithm Applications to Clustering Curves](https://github.com/sakuramomo1005/Functional-data-analysis-draft/blob/master/Wrapup0418/papers/Linear%20Transformations%20and%20the%20k-Means%20Clustering%20Algorithm%20Applications%20to%20Clustering%20Curves.pdf)
+* [Linear Transformations and the k-Means Clustering Algorithm Applications to Clustering Curves](https://github.com/sakuramomo1005/Functional-data-analysis-draft/blob/master/Wrapup0418/papers/Linear%20Transformations%20and%20the%20k-Means%20Clustering%20Algorithm%20Applications%20to%20Clustering%20Curves.pdf)
+* [Stratified Psychiatry via Convexity-Based Clustering with Applications Towards Moderator Analysis](https://github.com/sakuramomo1005/Functional-data-analysis-draft/blob/master/Wrapup0418/papers/Stratified%20Psychiatry%20via%20Convexity-Based%20Clustering%20with%20Applications%20Towards%20Moderator%20Analysis.pdf)
+* [pre presentation](https://github.com/sakuramomo1005/Functional-data-analysis-draft/blob/master/Wrapup0418/papers/talkFDNY.pdf)
 
-[Stratified Psychiatry via Convexity-Based Clustering with Applications Towards Moderator Analysis](https://github.com/sakuramomo1005/Functional-data-analysis-draft/blob/master/Wrapup0418/papers/Stratified%20Psychiatry%20via%20Convexity-Based%20Clustering%20with%20Applications%20Towards%20Moderator%20Analysis.pdf)
-
-[pre presentation](https://github.com/sakuramomo1005/Functional-data-analysis-draft/blob/master/Wrapup0418/papers/talkFDNY.pdf)
-
-* And asked questions [file](https://github.com/sakuramomo1005/Functional-data-analysis-draft/blob/master/Wrapup0418/results/some%20understandings%20and%20questions-Kate-2019-01-24.pdf)
+And asked questions 
+* [file](https://github.com/sakuramomo1005/Functional-data-analysis-draft/blob/master/Wrapup0418/results/some%20understandings%20and%20questions-Kate-2019-01-24.pdf)
 
 
 # Week2:
