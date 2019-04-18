@@ -29,7 +29,9 @@ Read paper and learnt associated knowledge
 * [pre presentation](https://github.com/sakuramomo1005/Functional-data-analysis-draft/blob/master/Wrapup0418/papers/talkFDNY.pdf)
 
 And asked questions 
-* [file](https://github.com/sakuramomo1005/Functional-data-analysis-draft/blob/master/Wrapup0418/results/some%20understandings%20and%20questions-Kate-2019-01-24.pdf)
+* [File](https://github.com/sakuramomo1005/Functional-data-analysis-draft/blob/master/Wrapup0418/results/some%20understandings%20and%20questions-Kate-2019-01-24.pdf)
+* [Codes for this file 1](https://github.com/sakuramomo1005/Functional-data-analysis-draft/blob/master/Wrapup0418/codes/some%20understandings%20and%20questions-Kate-2019-01-24.Rmd)
+* [Codes for this file 2](https://github.com/sakuramomo1005/Functional-data-analysis-draft/blob/master/Wrapup0418/codes/simulation%20and%20draw%20figure4%200124.R)
 
 
 # Week2:
