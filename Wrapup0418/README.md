@@ -103,6 +103,18 @@ Fixed the puirty simulation method. based on the idea of location and shape
 
 # Week10, 11:
 
+* Improved previous plots by adding gamma1 and gamma2 directions. 
+
+* Draw the similar plots with real dataset
+
+* Try the same process with consideration of intercept: beta_0, beta_1, beta_2, and gamma_0, gamma_1, and gamma_2
+
+* Try cvxcluster function with covariates
+
+[results week 10](https://github.com/sakuramomo1005/Functional-data-analysis-draft/blob/master/Wrapup0418/results/update0331.pdf)
+[results week 11](https://github.com/sakuramomo1005/Functional-data-analysis-draft/blob/master/Wrapup0418/results/result_0410.pdf)
+
+
 back to check the l... 
 
 dfs
