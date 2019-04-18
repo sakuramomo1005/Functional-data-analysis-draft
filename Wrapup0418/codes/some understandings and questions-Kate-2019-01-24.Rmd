@@ -1,0 +1,321 @@
+---
+title: "Some understandings and questions"
+date: 2019-01-24
+output: pdf_document
+fontsize: 12pt 
+geometry: tmargin=1.8cm,bmargin=1.8cm,lmargin=2.1cm,rmargin=2.1cm
+---
+I am very interested in reading the papers. However, I haven't learned functional data analysis before. Therefore, I would like to wrap up my understandings about functional data analysis, clustering, and preconditioning. Besides, I tried to reproduce the simulation results in the 2007 paper.
+Here are also some questions I met when reading the papers. Hope this tiny document can make our meeting more efficient. 
+
+## Understandings and Questions
+
+#### 1. Functional data analysis (FDA) and longitudinal data analysis
+
+I feel the data structure in functional data analysis similar to longitudinal data analysis (e.g. ECG data, collecting data from different people at a different time). Then what are the differences between these two methods?
+
+I guess the difference is that FDA treats the observed data functions as single entities, rather than the sequence of individual observations. Besides, FDA does not have parametric assumptions while LDA needs. And the data in LDA may be more sparse than FDA. 
+
+#### 2. The procedure of clustering FDA
+
+There are four methods mentioned in the paper: 
+
+* Raw data
+
+* B-spline basis and Fourier basis.
+
+* Power basis, L2 metric
+
+##### Raw data 
+
+I just wanted to make sure my understanding about them is correct. For the raw data method, we just put the $y_i s$ in the k-means algorithm without any transformations. If we have n observations, each observation has m observed points, then the input data is a n * m matrix and each observation is a m-dimensional real vector. Put this data into the k-means algorithm, which then clusters them into K groups. 
+
+**Question 1:**  
+
+If we would like to use raw data, does that mean the data must have a very neat structure and no missing data? For example, if the ECG points were collected at different time points for different people, does the method still work?  
+
+##### Basis 
+
+We can also estimate the functions and put the coefficients into the k-means to reduce the dimension. That is, the function $f()$ can be estimated by the function, which consists of a linear combination of $K$ known basis functions, such as Fourier basis, B-splines basis. 
+
+$n$ observations
+$$y_i = f(t_i) + \epsilon_i,i = 1,...,n,$$
+And 
+$$f(t) = \sum_{k = 1}^{k = K} b_k x_k(t)$$
+$x_k$ is the basis function.
+
+And the coefficents can be esitmated through least square methods, similar with linear regression:
+$$\hat b = (X^TX)^{-1}X^Ty$$
+where,
+$$\mathbf{X} = \left[\begin{array}{rrrr}
+x_1(t_1) & x_2(t_1) & ... & x_K(t_1) \\
+x_1(t_2) & x_2(t_2) & ... & x_K(t_2) \\
+... & ... & ... & ... \\
+x_1(t_n) & x_2(t_n) & ... & x_K(t_n)
+\end{array}\right]$$
+The basis functions can be Fourier functions, B-splines, Wavelets and so on. 
+
+**Question 2:**How could we choose the estimate basis?
+
+I found a statement online. If the data is periodic, Fourier may work better since Fourier series has a period. Otherwise, B-splines is more common.
+
+And usually how many functions ($x_i(t) s$) we need to estimate the $f()$? 
+
+**Question 3:** Different basis can be transformed from one to each other? 
+
+The derivative in the paper said 
+
+$$
+\begin{aligned}
+    \hat b_B & \approx (\hat{X^{\prime}}_B  \hat X_B)^{-1} \hat{X^{\prime}}_B y & \\
+     &= (\hat X_B^{\prime} P_F^{\prime} P_F X_B)^{-1} X_B^{\prime} P_F^{\prime} y =  (\hat X_B^{\prime} P_F^{\prime} P_F X_B)^{-1} X_B^{\prime} P_F  y& \text{since } P_F=P_F^{\prime} \\
+     &= (\hat X_B^{\prime} P_F X_B)^{-1} X_B^{\prime} X_F (X_F^{\prime} X_F)^{-1} X_F^{\prime} y & \text{since } P_F \text{ is idempotent} \\
+     & = T \hat b_F & 
+\end{aligned}
+$$
+
+Does that mean the estimated coefficients from one basis function can be transformed from another one basis function? 
+
+Why is that $\hat b_B \approx (\hat{X^{\prime}}_B  \hat X_B)^{-1} \hat{X^{\prime}}_B y$. Why they are not equal, i.g. $\hat b_B = (\hat{X^{\prime}}_B  \hat X_B)^{-1} \hat{X^{\prime}}_B y$?
+
+
+The thing I feel very interesting is that changing the regression coefficients can affect the results a lot. 
+
+
+## Simulation
+
+I tried to repeat the results (figure 3 and figure 4) in the 2007 paper. However, my results are not very good. I would like to show what I did to make sure whether the procedures were correct or not. 
+Consider K = 3 clusters and a linear function
+$$y(t) = b_0+ b_1 t + \epsilon,$$
+Where $\epsilon \sim N(0,0.25)$. The $b_0$ and $b_1$ are simulated from a multinormal distribution for each of the three clusters:
+
+* cluster 1
+$$
+\left(\begin{array}{cc} 
+b_0\\ 
+b_1
+\end{array}\right)
+= N( 
+\left(\begin{array}{c} 
+0 \\
+1
+\end{array}\right),
+\left(\begin{array}{cc} 
+2 & -1\\ 
+-1 & 6
+\end{array}\right))
+$$ 
+
+* cluster 2
+$$
+\left(\begin{array}{cc} 
+b_0\\ 
+b_1
+\end{array}\right)
+= N( 
+\left(\begin{array}{c} 
+2 \\
+1
+\end{array}\right),
+\left(\begin{array}{cc} 
+2 & -1\\ 
+-1 & 6
+\end{array}\right))
+$$ 
+
+* cluster 3
+$$
+\left(\begin{array}{cc} 
+b_0\\ 
+b_1
+\end{array}\right)
+= N( 
+\left(\begin{array}{c} 
+3 \\
+3
+\end{array}\right),
+\left(\begin{array}{cc} 
+2 & -1\\ 
+-1 & 6
+\end{array}\right))
+$$ 
+And $\pi_1 = \pi_2 =\pi_3 = 1/3$. $t = 0.1, 0.2, 0.3, .. ,1.0$. For each cluster, 100 $b_0s, b_1s$ were simulated from the above multivariate normal distributions. 
+
+### The Figure 3
+
+```{R include =FALSE}
+library(tidyverse)  # data manipulation
+library(cluster)    # clustering algorithms
+library(factoextra)
+library(MASS)
+library(expm)
+library(car)
+```
+
+```{R echo =FALSE}
+
+set.seed(123)
+phi = rbind(c(2,-1),c(-1,6))
+mu1 = c(0,1); mu2 = c(2,1); mu3 = c(3,3)
+bc1 = mvrnorm(100, mu = mu1, Sigma = phi) 
+bc2 = mvrnorm(100, mu = mu2, Sigma = phi) 
+bc3 = mvrnorm(100, mu = mu3, Sigma = phi) 
+b = rbind(bc1,bc2,bc3)
+B= data.frame(b)
+B$type = c(rep(1,100),rep(2,100),rep(3,100))
+
+t = seq(0,1,0.1)
+clus = c()
+y1 = y2 = y3 = matrix(100*11,100,11)
+for(i in 1:100){
+  y1[i,] =  bc1[i,1] + bc1[i,2] * t + rnorm(11,0,0.5)
+  y2[i,] =  bc2[i,1] + bc2[i,2] * t + rnorm(11,0,0.5)
+  y3[i,] =  bc3[i,1] + bc3[i,2] * t + rnorm(11,0,0.5)
+}
+
+
+x = cbind(rep(1,11),seq(0,1,0.1))
+udv = svd(x)
+u = udv$u; d = diag(udv$d); v = udv$v
+x0 = x %*% v %*% solve(d)
+
+mu = (mu1 + mu2 + mu3)/3
+B = ((mu1 - mu) %*% t(mu1 - mu) + 
+       (mu2 - mu) %*% t(mu2 - mu) +
+       (mu3 - mu) %*% t(mu3 - mu))/3
+W = phi
+
+library(expm)
+
+w = sqrtm(W)
+
+wbw = solve(w) %*% B %*% solve(w)
+H = eigen(wbw)$vectors
+D = diag(eigen(wbw)$values)
+tau = solve(w) %*% H
+C = diag(c(3.5,1))
+Ctau = C %*% t(tau)
+
+bhat1 = t(solve(t(x0) %*% x0) %*% t(x0) %*% t(y1))
+bhat2 = t(solve(t(x0) %*% x0) %*% t(x0) %*% t(y2))
+bhat3 = t(solve(t(x0) %*% x0) %*% t(x0) %*% t(y3))
+
+bhat21 = t(Ctau %*% t(bc1))
+bhat22 = t(Ctau %*% t(bc2))
+bhat23 = t(Ctau %*% t(bc3))
+
+b = rbind(bc1,bc2,bc3)
+B= data.frame(b)
+B$type = c(rep(1,100),rep(2,100),rep(3,100))
+B$type = as.factor(B$type)
+
+
+par(mfrow = c(2,2))
+with(B, dataEllipse(X1, X2, type, pch=15:17,cex = 0.5,
+                    ylim=c(min(b),max(b)),xlim=c(min(b),max(b)),
+                    center.pch="+",
+                    col = c('green','red','blue'),
+                    group.labels=c("clus 1", "clus 2", "clus 3"),
+                    level=.95, fill=TRUE, fill.alpha=0.1,
+                    main = 'Original Distribution',
+                    xlab = 'Intercept', ylab = 'Slope'))
+points(mean(bc1[,1]), mean(bc1[,2]),cex=2,pch = 8,col='darkred')
+points(mean(bc2[,1]), mean(bc2[,2]),cex=2,pch = 8,col='darkgreen')
+points(mean(bc3[,1]), mean(bc3[,2]),cex=2,pch = 8,col='darkblue')
+
+B2 = data.frame(rbind(bhat1,bhat2,bhat3))
+B2$type = B$type
+with(B2, dataEllipse(X1, X2, type, pch=15:17,cex = 0.5,
+                     ylim=c(min(B2[,1:2]),max(B2[,1:2])),xlim=c(min(B2[,1:2]),max(B2[,1:2])),
+                     center.pch="+",
+                     col = c('green','red','blue'),
+                     group.labels=c("clus 1", "clus 2", "clus 3"),
+                     level=.95, fill=TRUE, fill.alpha=0.1,
+                     main = 'Orthogonal Design',
+                     xlab = 'Intercept', ylab = 'Slope'))
+points(mean(bhat1[,1]), mean(bhat1[,2]),cex=2,pch = 8,col='darkred')
+points(mean(bhat2[,1]), mean(bhat2[,2]),cex=2,pch = 8,col='darkgreen')
+points(mean(bhat3[,1]), mean(bhat3[,2]),cex=2,pch = 8,col='darkblue')
+
+
+B3 = data.frame(rbind(bhat21,bhat22,bhat23))
+B3$type = B$type
+with(B3, dataEllipse(X1, X2, type, pch=15:17,cex = 0.5,
+                     ylim=c(min(B3[,1:2]),max(B3[,1:2])),
+                     xlim=c(min(B3[,1:2]),max(B3[,1:2])),
+                     center.pch="+",
+                     col = c('green','red','blue'),
+                     group.labels=c("clus 1", "clus 2", "clus 3"),
+                     level=.95, fill=TRUE, fill.alpha=0.1,
+                     main = 'Canonical Transformation',
+                     xlab = 'Intercept', ylab = 'Slope'))
+points(mean(bhat21[,1]), mean(bhat21[,2]),cex=2,pch = 8,col='darkred')
+points(mean(bhat22[,1]), mean(bhat22[,2]),cex=2,pch = 8,col='darkgreen')
+points(mean(bhat23[,1]), mean(bhat23[,2]),cex=2,pch = 8,col='darkblue')
+
+par(mfrow = c(1,1))
+```
+
+The results do not look similar to the one in the paper. 
+
+#### Coefficient distribution based on the original distribution
+
+With the original data, I just put the simulated $b_0$ and $b_1$ in the plots and drew their two-dimensional ellipse based on mean and covariance.
+
+#### Coefficient distribution using an orthogonal design matrix
+
+To transform with an orthogonal design matrix, SVD decomposition was performed on $X$. The $X$ matrix is 
+$$
+X = 
+\left(\begin{array}{cc} 
+1 & 0.1 \\
+1 & 0.2 \\
+...& ... \\
+1 & 1.0
+\end{array}\right)
+$$
+$X=UDV^{\prime}$. And $X_0 = XVD^{-1}$ is an orthogonal design matrix and $b_0 = DVb$ is the vector of associated regression coefficients. 
+
+Therefore, to draw plots of intercepts and slopes, I times $b$ matrix with $DV$, which is just $b_0$ above. 
+
+
+#### Coefficient distribution using a canonical transformation
+
+The covariance matrix for $b$ can be decoppsed as within cluster variance $W$ and between cluster variance $B$, that is
+$$cov(b) = W + B,$$
+where $$W =\sum_{j=1}^{k}\pi_j\Phi_j \text{ , and } B = \sum_{j=1}^{k}\pi_j(\mu_j -\mu)(\mu_j -\mu)^{\prime}$$
+And
+$$W^{-1/2}BW^{-1/2} = HDH^{\prime}$$
+where $H$ is a matrix where the columns are eigenvectors of $W^{-1/2}BW^{-1/2}$, $D$ is the diagonal matrix where the diagonal values are eigenvalues of $W^{-1/2}BW^{-1/2}$ from biggest to smallest. 
+
+And then we know that the canonical transformation for cluster is 
+$$C\Gamma^{\prime}b,$$
+$C$ is a diagnoal matrix and is chosen as (3.5,1) and $\Gamma =W^{-1/2}H$
+
+Therefore, to draw plots of intercepts and slopes, I just times $b$ matrix with $C\Gamma^{\prime}$.
+
+However, the final results do not look good. Is there some misunderstanding in those processes? 
+
+
+
+### The Figure 4
+
+```{r fig.width=4, fig.height=4, fig.align = "center",echo=FALSE}
+library(png)
+library(grid)
+img <- readPNG("/Users/yaolanqiu/Desktop/NYU/rotation/Rotation2/week1/figure4.png")
+ grid.raster(img)
+```
+
+I put the matrix of $[b_o, b_1]_{(300 ,2)}$ (3 clusters, each cluster has 100 observations, each observation has a simulated intercept and slop) into the k-means algorithm, as well as the matrix with above transformations. After calculations of the center, the sum of the squared error between the estimated center and the true center is calculated. The b matrix from transformation methods is then transformed back to the original version (for example, for the orthogonal design matrix transformation, the results time with $(DV)^{-1}$; for the canconical transformation, the results time with $(C\Gamma^{\prime})^{-1}$).  After 1000 replications of the above process, the mean squared error for each method is calculated and their densities are plotted. 
+
+However, my results have multiple peaks, which are different
+from the results in the paper. 
+
+**Question 4:**
+
+However, in practice, we do not know the true mean value in each cluster. How could we estimate the effect of different methods? Using projection pursuit clustering?    
+
+**Question 5:**
+
+The simulation process is different from the one in practice, right? In practice, we need to fit the function with basis models and estimate the coefficients, and then put the coefficients in the k-means algorithm, which is then similar to above, is that right?
