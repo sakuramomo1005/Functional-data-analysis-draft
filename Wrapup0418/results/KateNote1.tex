@@ -1,0 +1,38 @@
+\documentclass[12pt]{article}
+\usepackage{epsfig}
+\usepackage{natbib}
+\usepackage{multirow}
+\bibliographystyle{mybst}
+\input util.tex
+\bigpage
+\newtheorem{theorem}{Theorem}
+\begin{document}
+
+\baselineskip=24truept
+
+
+
+\title{Note on Kate's Rotation Project }
+
+\date{February 13, 2019} \maketitle
+
+
+For the linear mixed-effects model to fit the parabolas, we can consider
+$$\by = \bX(\bbeta +\bb +\bGamma(\balpha'\bx)) + \bepsilon.$$
+The goal is to find a vector $\balpha$ that gives the best ``purity'' when clustering.  $\bX$ will be the design matrix for the orthogonal polynomials; $\bb$ the vector of 
+random effects; $\bGamma$ a vector (of the same dimension of $\bbeta$) of fixed-effects.
+
+Actually, we can fit a model separately for the drug and placebo treatments
+$$\by_1 = \bX(\bbeta_1 +\bb_1 +\bGamma_1(\balpha'\bx)) + \bepsilon_1\;\;\mbox{and}
+\;\;
+\by_2 = \bX(\bbeta_2 +\bb_2 +\bGamma_2(\balpha'\bx)) + \bepsilon_2.
+$$
+My intuition says to find $\balpha$ that leads to big differences in $\bGamma_1$ and $\bGamma_2$ as well as differences between $\bbeta_1$
+and $\bbeta_2$.  If we choose $\balpha$ and then fit the model, that will determine $\hat{\bGamma}_1, \hat{\bGamma}_2, \hat{\bbeta}_1$ 
+and $\hat{\bbeta}_2$.   
+
+
+\bibliography{all}
+
+\end{document}
+
