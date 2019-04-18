@@ -5,8 +5,8 @@ Content
 <!--ts-->
    * [Timelines](#Timelines)
       * [week1](#Week1)
-   * [week2](#Week2)
-   * [week3](#Week3)
+      * [week2](#Week2)
+      * [week3](#Week3)
    * [week4](#Week4)
    * [week5](#Week5)
    * [week6](#Week6)
@@ -36,7 +36,7 @@ And asked questions
 * [Codes for this file 2](https://github.com/sakuramomo1005/Functional-data-analysis-draft/blob/master/Wrapup0418/codes/simulation%20and%20draw%20figure4%200124.R)
 
 
-# Week2:
+## Week2:
 
 Aim: 
 
@@ -56,11 +56,15 @@ The results:
 
 By simply choose variables without transforamtinos, the results are not very satified. 
 
-The summary from Dr. Tarpey:
+The summary from Dr. Tarpey: [Rotation project](https://github.com/sakuramomo1005/Functional-data-analysis-draft/blob/master/Wrapup0418/results/KateRotationProject2.pdf)
 
-[Rotation project](https://github.com/sakuramomo1005/Functional-data-analysis-draft/blob/master/Wrapup0418/results/KateRotationProject2.pdf)
+## Week3:
 
-# Week3:
+Since the previous method did not work well. The idea got changed to the paper: [Stratified Psychiatry via Convexity-Based Clustering with Applications Towards Moderator Analysis](https://github.com/sakuramomo1005/Functional-data-analysis-draft/blob/master/Wrapup0418/papers/Stratified%20Psychiatry%20via%20Convexity-Based%20Clustering%20with%20Applications%20Towards%20Moderator%20Analysis.pdf)
+
+Asked questions and found new focuses: 
+
+* [summary files](https://github.com/sakuramomo1005/Functional-data-analysis-draft/tree/master/Wrapup0418/results/Purity)
 
 # Week4:
 
