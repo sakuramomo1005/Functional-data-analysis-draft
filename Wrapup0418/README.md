@@ -68,6 +68,16 @@ Asked questions and found new focuses:
 
 # Week4:
 
+
+Run Newton Raphson method to find the max purity value. 
+
+hcaf dataset
+dat$AX = dat$BaselineCGI + dat$age
+
+[results-week4](https://github.com/sakuramomo1005/Functional-data-analysis-draft/blob/master/Wrapup0418/results/results.pdf)
+
+However, the results were not good at that time. There were some bugs. 
+
 # Week5:
 
 # Week6:
