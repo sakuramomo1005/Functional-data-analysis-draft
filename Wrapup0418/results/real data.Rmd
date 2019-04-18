@@ -1,0 +1,40 @@
+---
+title: "Untitled"
+output: pdf_document
+header-includes:
+  - \usepackage{color}
+---
+
+
+After changing the method to do the Monte Carlo simulation and the parameters, it seems that this method works well. We may try to apply this method to the real data. 
+
+I firstly tried the *$\color{blue}hcaf$*  dataset
+
+```{R echo = FALSE}
+# Column 7: t2 = week^2 (for quadratic fit)
+setwd('/Users/yaolanqiu/Desktop/NYU/rotation/Rotation2/Week3/from dr.tarpey')
+dat <- read.table("hcaf.dat", header=T)
+head(dat)
+
+setwd('/Users/yaolanqiu/Desktop/NYU/rotation/Rotation2/Week10')
+load( 'hcaf2_called_data.RData')
+```
+
+The two covariates are "age" and "BaselineCGI". We could try to make combination of these two covariates as a new covariate $w$: 
+$$w = sin(\theta) * age + cos(\theta) * BaselineCGI$$
+
+Here are the results:
+
+```{R echo= FALSE}
+plot(data$x / 180 * pi, data$y, type ='l', pch = 18,
+     xlab = 'theta',ylab= 'purity',
+     main = 'true dataset hcaf')
+
+```
+
+The max value is 
+```{R}
+data[data$y == max(data$y),]
+```
+
+Which is about consistent to the paper's results. The "age" almost does not have effect on the clusters while "BaselineCGI" can affect the clusters.

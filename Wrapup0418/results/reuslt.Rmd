@@ -1,0 +1,110 @@
+---
+title: "Simulation"
+date: 2019-03-31
+output: pdf_document
+header-includes:
+  - \usepackage{color}
+---
+
+##  Highlight results
+
+1. Changes: change the monte carlo simulation calculation method; change the parameter values
+
+2. The simulation results is good, the max value is exactly the true value
+
+3. Tried this method on the hcaf dataset. The selected covariates combination is corresponding to the results that found in the paper. 
+
+## More details
+
+### Procedures of simulation
+
+* Step 1: Specify true $\alpha$, where $||\alpha|| = 1$. We could set $\alpha = (sin(\theta_0),cos(\theta_0))$. $\theta_0$ is the true $\theta$ to make $\alpha$ equal to the true $\alpha$
+
+* Step 2: Specify $\beta, \Gamma, D$ for drug group (drg) and placebo group (pbo)
+
+* Step 3: Simulate $n$ observations (e.g. n = 100/treatment)
+
+* Step 4: Generate 10000 points from the true model. (10000 points generated from MVN($\mu$,$I$), where $\mu = (0,0)^T$, $I$ is a 2 by 2 identity matrix.)
+
+* Step 5: Compute "true" purity:
+
+.$\qquad$ $\qquad$  The purity is defined as 
+$$p(w_i) = \frac{1}{10000}\sum_{i=1}^{10000}\frac{[f_1(z_i|w_i) - f_2(z_i|w_i)]^2}{f_1(z_i|w_i) + f_2(z_i|w_i)}$$
+
+Since we have generated 10000 points from standard multivariate normal distribution. We could do a transformation to get simulated points based on the new multivariate normal distribution, whose mean and covariance matrix was estimated from linear mixed model. 
+
+* Step 6: Compute $\hat{\text{purity}}$ using $\hat{f_1}$, $\hat{f_2}$ from the 100 sample. 
+
+* Step 7: Specify $\theta \sim [0,\pi]$, e.g. seq(0,$\pi$,100). Calculate $\alpha s$ from $\theta$
+
+* Step 8: Fit model using $\alpha s$
+
+* Step 9: Compute purity
+
+
+## The results
+
+#### 1. Simulation
+
+As the plot, the max purity value in the simulation is exactly the one simulated with the true $\alpha$
+
+```{R echo = FALSE}
+setwd('/Users/yaolanqiu/Desktop/NYU/rotation/Rotation2/Week10')
+load('simulation_called_data.RData')
+plot(data$x /180 * pi, data$y, type = 'l', cex = 0.8, ylab = 'purity', xlab = 'theta', main = 'Simulation data theta v.s. purity plot')
+points(data[data$y == max(data$y),]$x  /180 * pi, data[data$y == max(data$y),]$y[1], col = 'red', pch = 20)
+lines(c(pi/3,pi/3), c(0, data[data$x == pi/3, ]$y[1]), lty = 2, col = 'red')
+text(120/180*pi, 1600,'Max = pi/3')
+```
+
+The max value is: 
+
+```{R}
+data[data$y == max(data$y),]$x/180*pi
+```
+
+which is approximately equal to $\frac{\pi}{3}$
+
+```{R}
+pi/3
+```
+
+
+#### 2. Find the max value for the purity calculation function
+
+Since the simulation generated discrete points, the max value of those discrete points may not represent the true max value. Therefore, we would like to calculate the max for the function: 
+$$purity = f(\alpha)$$
+For now there are two methods to solve this: 
+
+* Gradient descent
+
+* Genetic algorithm
+
+**Gradient descent**
+
+For gradient descent, it doesn't converge. Maybe because the function is periodic？ 
+
+I plot the points trajectory generated from the gradient descent (a gif file). There is the link to check it:
+
+$\color{blue}The link$
+[points trajectory for gradient descent 1 ](https://github.com/sakuramomo1005/Functional-data-analysis-draft/blob/master/2.gif)
+
+$\color{blue}The link$
+[points trajectory for gradient descent 2 ](https://github.com/sakuramomo1005/Functional-data-analysis-draft/blob/master/3.gif)
+
+$\color{blue}The link$
+
+[points trajectory for gradient descent 3](https://github.com/sakuramomo1005/Functional-data-analysis-draft/blob/master/4.gif)
+
+
+
+**Genetic algorithm**
+
+The gentic algorith converges very fast:
+
+[points trajectory for genetic algorithm ](https://github.com/sakuramomo1005/Functional-data-analysis-draft/blob/master/genetic.gif)
+
+
+Find the max value
+
+using gradient decient, it doesent work well 
