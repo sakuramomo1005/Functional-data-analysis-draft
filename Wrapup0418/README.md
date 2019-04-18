@@ -83,6 +83,8 @@ However, the results were not good at that time. There were some bugs.
 
 ## Week5, 6, 7:
 
+Plot $\lambda$ v.s. $w$ 
+
 Fixed the questions on the purity 
 [](https://github.com/sakuramomo1005/Functional-data-analysis-draft/blob/master/Draft/Week6/purity%20confusion%20(2).ipynb)
 
