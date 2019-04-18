@@ -36,9 +36,23 @@ And asked questions
 
 # Week2:
 
-Aim: Try to analyze the real data. Choose 2 or more baseline covariates and do k-means and see whether we could get a good VI.
+Aim: 
 
+* Try to analyze the real data. Choose 2 or more baseline covariates and do k-means and see whether we could get a good VI.
 
+The data used: 
+
+* *longFormat_score17*
+
+The codes: 
+
+* [codes files](https://github.com/sakuramomo1005/Functional-data-analysis-draft/tree/master/Wrapup0418/codes/VI)
+
+The results:
+
+* [results files](https://github.com/sakuramomo1005/Functional-data-analysis-draft/tree/master/Wrapup0418/results/VI)
+
+By simply choose variables without transforamtinos, the results are not very satified. 
 
 # Week3:
 
