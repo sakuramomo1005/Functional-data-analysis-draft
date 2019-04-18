@@ -111,8 +111,8 @@ Fixed the puirty simulation method. based on the idea of location and shape
 
 * Try cvxcluster function with covariates
 
-[results week 10](https://github.com/sakuramomo1005/Functional-data-analysis-draft/blob/master/Wrapup0418/results/update0331.pdf)
-[results week 11](https://github.com/sakuramomo1005/Functional-data-analysis-draft/blob/master/Wrapup0418/results/result_0410.pdf)
+  * [results week 10](https://github.com/sakuramomo1005/Functional-data-analysis-draft/blob/master/Wrapup0418/results/update0331.pdf)
+  * [results week 11](https://github.com/sakuramomo1005/Functional-data-analysis-draft/blob/master/Wrapup0418/results/result_0410.pdf)
 
 
 back to check the l... 
