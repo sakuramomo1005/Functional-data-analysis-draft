@@ -1,0 +1,110 @@
+\documentclass[12pt]{article}
+\usepackage{epsfig}
+\usepackage{natbib}
+\usepackage{multirow}
+\usepackage{amsmath}
+\bibliographystyle{mybst}
+\input boldmath.tex
+\usepackage{soul} % So I can use \st for strikethrough
+\usepackage{color}
+\newcommand{\thad}[1]{{\textcolor{blue}{#1}}}
+
+%\bigpage
+\newtheorem{theorem}{Theorem}
+\begin{document}
+\title{Outline 2}
+\date{February 14, 2019} \maketitle
+\subsection{Step1: }
+
+To calculate the max purity function, first,  
+fit the linear mixed model for the outcome $\by$ \st{$\b{y}$} and time $\bX$, with baseline covariates $\bx$:  
+$$\by = \bX(\bbeta +\bb +\bGamma(\balpha'\bx)) + \bepsilon.$$We can define the covariate matrix of $\bX$ as $\bz$. The $\bz$ contains both fixed effects and random effects. 
+$$\bz = \bbeta + \bb + \bGamma x$$
+We can also write the above equation in the matrix version:
+$$Y = \left[\begin{array}
+{rrr}
+1 & t_1 & t_1^2 \\
+1 & t_2 & t_2^2 \\
+1 & t_3 & t_3^2 \\
+1 & t_4 & t_4^2
+\end{array}\right]
+\left[\begin{pmatrix}
+\beta_0 \\
+\beta_1 \\
+\beta_2
+\end{pmatrix} +  
+\begin{pmatrix}
+b_0 \\
+b_1 \\
+b_2
+\end{pmatrix} + 
+\begin{pmatrix}
+\gamma_0 \\
+\gamma_1 \\
+\gamma_2
+\end{pmatrix} x \right] + \bepsilon$$
+where 
+\begin{itemize}
+\item
+ $\bbeta$ is the vector of covariates for fixed effects of $\bX$.
+\item
+ $\bb$ is the vector of random effects 
+\item
+ $\bGamma$ \st{$\bx$} is the vector of fixed effects of the baseline covariates.
+
+\item
+ $w=\balpha'\bx$ is the combination of the input baseline covariates.
+\end{itemize}
+
+\subsection{Step 2:}
+
+\st{Then we need to} Estimate the distribution of $\bz$ for drug group and placebo, separately.
+$$\begin{aligned}
+f(\bz) &= \int_w f(\bz,w) dw \\
+ & = \int_w f(\bz|w) g(w) dw
+\end{aligned}$$
+where,
+\begin{itemize}
+\item
+ the conditional distribution 
+$f(\bz|w) \sim MVN( \bbeta + \bGamma w, \bD)$
+
+\item
+$g(w)$ is the distribution of the covariates combination $\balpha'\bx$. For example, if the covariates combination only contains "sex", which is binary, then the integral becomes summation.
+
+\item
+ $\bD$ is the \st{covariates} \thad{covariance} matrix of random effects $\bb$. 
+\end{itemize}
+%\\[1cm]
+~\\
+\noindent
+We could then \st{fit} \thad{estimate} the $f(\cdot)$ for drug group and placebo group separately, i.e. $f_1(\bz)$ and $f_2(\bz)$. 
+
+\subsection{Step 3:}
+
+Define the purity for a combination of covariates $w=\balpha'\bx$ as 
+$$f_1(\bz|x) = (2\pi)^{-\frac{p}{2}} |\bD|^{-1/2}\exp(-\frac{1}{2} ( \bz - \hat{\bbeta}_1 - \hat{\bGamma}_1 w)^{T} D^{-1} (\bz - \hat{\bbeta}_1  - \hat{\bGamma}_1 w) )$$
+$$f_2(\bz|x) = (2\pi)|^{-\frac{p}{2}} |\bD|^{-1/2} \exp(-\frac{1}{2} ( \bz - \hat{\bbeta}_1 - \hat{\bGamma}_1 w)^{T} D^{-1} (\bz - \hat{\bbeta}_1  - \hat{\bGamma}_1 w) )$$
+\thad{[Note - I fixed the exponents of the normalization constant, $p=$ dimension of $\bbeta$]}
+
+$$\int_w { \bigl[ {\pi_1 f_1(\bz|w) - \pi_2 f_2(\bz|w) \over \pi_1 f_1(\bz|w) + \pi_2 f_2(\bz|w)} \bigr]^2 g(x) dw} $$
+which can be also approximated as the summation form: 
+$$\sum_{i=1}^n \bigl[ {\pi_1 f_1(\bz|w_i) - \pi_2 f_2(\bz|w_i) \over \pi_1 f_1(\bz|w_i) + \pi_2 f_2(\bz|w_i)} \bigr]^2 $$
+\thad{[Take off $g(x)$ in summation.]}
+
+~\\
+\noindent
+This is one purity value based on one combination of baseline covariates. Define the purity as \st{$P_x$} \thad{$P_{\balpha}$}.
+
+~\\
+
+\noindent
+We would like to find the $\balpha$ that max the \st{$P_x$}
+ \thad{$P_{\balpha}$}, i.e.,
+ $$\hat{\balpha} = {\arg \max}_{\balpha} P_{\balpha}=
+ {\arg \max}_{\balpha}
+ \int_{\balpha'\bx} { \bigl[ {\pi_1 f_1(\bz|\balpha'\bx) - \pi_2 f_2(\bz|\balpha'\bx) \over \pi_1 f_1(\bz|\balpha'\bx) + \pi_2 f_2(\bz|\balpha'\bx)} \bigr]^2 g(\balpha'\bx) d\balpha'\bx} $$
+
+
+\bibliography{all}
+\end{document}

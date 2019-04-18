@@ -1,0 +1,93 @@
+\documentclass[12pt]{article}
+\usepackage{epsfig}
+\usepackage{natbib}
+\usepackage{multirow}
+\usepackage{amsmath}
+\bibliographystyle{mybst}
+\input boldmath.tex
+\bigpage
+\newtheorem{theorem}{Theorem}
+\begin{document}
+\title{Outline 2}
+\date{February 14, 2019} \maketitle
+\subsection{Step1: }
+
+To calculate the max purity function, first,  
+fit the linear mixed model for the outcome $\b{y}$ and time $\bX$, with baseline covariates $\bx$:  
+$$\by = \bX(\bbeta +\bb +\bGamma(\balpha'\bx)) + \bepsilon.$$We can define the covariate matrix of $\bX$ as $\bz$. The $\bz$ contains both fixed effects and random effects. 
+$$\bz = \beta + \bb + \bGamma x$$
+We can also write the above equation in the matrix version:
+$$Y = \left[\begin{array}
+{rrr}
+1 & t_1 & t_1^2 \\
+1 & t_2 & t_2^2 \\
+1 & t_3 & t_3^2 \\
+1 & t_4 & t_4^2
+\end{array}\right]
+\left[\begin{pmatrix}
+\beta_0 \\
+\beta_1 \\
+\beta_2
+\end{pmatrix} +  
+\begin{pmatrix}
+b_0 \\
+b_1 \\
+b_2
+\end{pmatrix} + 
+\begin{pmatrix}
+\gamma_0 \\
+\gamma_1 \\
+\gamma_2
+\end{pmatrix} x \right] + \bepsilon$$
+where 
+
+* $\bbeta$ is the vector of covariates for fixed effects of $\bX$.
+
+* $\bb$ is the vector of random effects 
+
+* $\bGamma \bx$ is the vector of fixed effects of the baseline covariates.
+
+* $x$ is the combination of the input baseline covariates. $x = \balpha'\bx$ and $\bx$ is the covariates vector.
+
+\subsection{Step2:}
+
+Then we need to estimate the distribution of $\b{z}$ for drug group and placebo, separately.
+$$\begin{aligned}
+f(z) &= \int_x f(z,x) dx \\
+ & = \int_x f(z|x) g(x) dx
+\end{aligned}$$
+where,
+
+* the conditional distribution 
+$f(z|x) \sim MVN( \bbeta + \bGamma \bx, \bD)$
+
+* $g(x)$ is the distribution of the covariates combination. For example, if the covariates combination only contains "sex", which is binary, then the intergal becomes summation.
+
+* $\bD$ is the covariates matrix of random effects $\bb$. 
+
+\\[1cm]
+~\\
+\noindent
+We could then fit the $f(\cdot)$ for drug group and placebo group separately, i.e. $f_1(z)$ and $f_2(z)$. 
+
+\subsection{Step3:}
+
+Define the purity for a combination of covariates x as 
+$$f_1(z|x) = |2\pi D|^{-\frac{1}{2}} exp(-\frac{1}{2} ( \bz - \hat{\bbeta}_1 - \hat{\bGamma}_1 x)^{T} D^{-1} (\bz - \hat{\bbeta}_1  - \hat{\bGamma}_1 x) )$$
+$$f_2(z|x) = |2\pi D|^{-\frac{1}{2}} exp(-\frac{1}{2} ( \bz - \hat{\bbeta}_1 - \hat{\bGamma}_1 x)^{T} D^{-1} (\bz - \hat{\bbeta}_1  - \hat{\bGamma}_1 x) )$$
+
+$$\int_x (\frac{\pi_1 f_1(z|x) - \pi_2 f_2(z|x)}{\pi_1 f_1(z|x) + \pi_2 f_2(z|x)}})^2 g(x) dx $$
+which can be also approximated as the summation form: 
+$$\sum_{x} (\frac{\pi_1 f_1(z|x) - \pi_2 f_2(z|x)}{\pi_1 f_1(z|x) + \pi_2 f_2(z|x)}})^2 g(x)$$
+
+~\\
+\noindent
+This is one purity value based on one combination of baseline covariates. Define the purity as $P_x$
+
+~\\
+
+\noindent
+We would like to find the $\balpha$ that max the $P_x$
+
+\bibliography{all}
+\end{document}
