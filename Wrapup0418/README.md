@@ -101,7 +101,7 @@ tried to use MC to simulate data and calculate purity
 
 Fixed the puirty simulation method. based on the idea of location and shape
 
-# Week10, 11:
+## Week10_11
 
 * Improved previous plots by adding gamma1 and gamma2 directions. 
 
