@@ -107,5 +107,5 @@ Fixed the puirty simulation method. Instead of calculating through the pdfs, gen
 
 ## Week12
 
-Similar simulation. But try data with 3 baseline covariates.
+Similar simulation. But try data with 3 baseline covariates. [results week 12](https://github.com/sakuramomo1005/Functional-data-analysis-draft/blob/master/Wrapup0418/results/result_0419.pdf)
 
