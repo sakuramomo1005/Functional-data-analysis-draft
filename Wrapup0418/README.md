@@ -3,7 +3,6 @@ Content
 =================
 
 <!--ts-->
-   * [Project description](#Project_description)
    * [Timelines](#Timelines)
       * [week1](#Week1)
       * [week2](#Week2)
@@ -13,14 +12,11 @@ Content
       * [week8](#Week8)
       * [week9](#Week9)
       * [week10_11](#Week10_11)
+      * [week10_12](#Week12)
 <!--te-->
 
 
 # Project description
-
-## Methods
-
-## Results
 
 
 # Timelines
@@ -71,11 +67,9 @@ Asked questions and found new focuses:
 
 ## Week4:
 
-
 Run Newton Raphson method to find the max purity value. 
 
-hcaf dataset
-dat$AX = dat$BaselineCGI + dat$age
+The hcaf dataset was used. Generated a linear transformation: dat$AX = dat$BaselineCGI + dat$age
 
 [results-week4](https://github.com/sakuramomo1005/Functional-data-analysis-draft/blob/master/Wrapup0418/results/results.pdf)
 
@@ -83,23 +77,20 @@ However, the results were not good at that time. There were some bugs.
 
 ## Week5, 6, 7:
 
-Plot $\lambda$ v.s. $w$ 
+Figured out the way to calculate the purity. And drew the $\lambda$ v.s. $w$ plot
 
 Fixed the questions on the purity 
 [](https://github.com/sakuramomo1005/Functional-data-analysis-draft/blob/master/Draft/Week6/purity%20confusion%20(2).ipynb)
 
-got new ..
-
-simulation 
+Began to do the simulation. 
 
 # Week8:
 
-tried to use MC to simulate data and calculate purity 
-
+Tried to use Monte Carlo method to simulate data and calculate purity. 
 
 # Week9:
 
-Fixed the puirty simulation method. based on the idea of location and shape
+Fixed the puirty simulation method. Instead of calculating through the pdfs, generate X from standard MVN and move and shift the distributions to f1 and f2 and then calculate the purity. 
 
 ## Week10_11
 
@@ -114,7 +105,7 @@ Fixed the puirty simulation method. based on the idea of location and shape
   * [results week 10](https://github.com/sakuramomo1005/Functional-data-analysis-draft/blob/master/Wrapup0418/results/update0331.pdf)
   * [results week 11](https://github.com/sakuramomo1005/Functional-data-analysis-draft/blob/master/Wrapup0418/results/result_0410.pdf)
 
+## Week12
 
-back to check the l... 
+Similar simulation. But try data with 3 baseline covariates.
 
-dfs
