@@ -84,11 +84,11 @@ Fixed the questions on the purity
 
 Began to do the simulation. 
 
-# Week8:
+## Week8:
 
 Tried to use Monte Carlo method to simulate data and calculate purity. 
 
-# Week9:
+## Week9:
 
 Fixed the puirty simulation method. Instead of calculating through the pdfs, generate X from standard MVN and move and shift the distributions to f1 and f2 and then calculate the purity. 
 
