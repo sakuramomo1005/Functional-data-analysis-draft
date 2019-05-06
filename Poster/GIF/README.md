@@ -5,3 +5,5 @@
 * Please put the png files and beamer.tex under same folder to generate the slide
 
 * The Adobe reader is needed for the gif.
+
+![image](https://github.com/sakuramomo1005/Functional-data-analysis-draft/blob/master/Poster/GIF/simulation.gif)
