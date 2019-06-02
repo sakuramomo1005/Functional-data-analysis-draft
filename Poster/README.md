@@ -9,6 +9,7 @@ Outline of the poster:
 * Project introdcution
 
 
+
 * Method description
   + The convexity-based clustering algorithm
   + The new defination of purity
